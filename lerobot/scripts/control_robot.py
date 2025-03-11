@@ -333,6 +333,9 @@ def record(
     if cfg.push_to_hub:
         dataset.push_to_hub(tags=cfg.tags, private=cfg.private)
 
+    if cfg.push_to_gcs:
+        dataset.push_to_gcs(destination_prefix=dataset.repo_id)
+
     log_say("Exiting", cfg.play_sounds)
     return dataset
 

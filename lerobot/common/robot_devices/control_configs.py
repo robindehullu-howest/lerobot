@@ -75,11 +75,13 @@ class RecordControlConfig(ControlConfig):
     # Encode frames in the dataset into video
     video: bool = True
     # Upload dataset to Hugging Face hub.
-    push_to_hub: bool = True
+    push_to_hub: bool = False
     # Upload on private repository on the Hugging Face hub.
-    private: bool = False
+    private: bool = True
     # Add tags to your dataset on the hub.
     tags: list[str] | None = None
+    # Upload dataset to GCS Bucket.
+    push_to_gcs: bool = True
     # Number of subprocesses handling the saving of frames as PNG. Set to 0 to use threads only;
     # set to ≥1 to use subprocesses, each using threads to write images. The best number of processes
     # and threads depends on your system. We recommend 4 threads per camera with 0 processes.

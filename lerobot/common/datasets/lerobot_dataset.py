@@ -73,6 +73,9 @@ from lerobot.common.datasets.video_utils import (
 )
 from lerobot.common.robot_devices.robots.utils import Robot
 
+import fnmatch
+from google.cloud import storage
+
 CODEBASE_VERSION = "v2.1"
 
 
@@ -569,6 +572,41 @@ class LeRobotDataset(torch.utils.data.Dataset):
             with contextlib.suppress(RevisionNotFoundError):
                 hub_api.delete_tag(self.repo_id, tag=CODEBASE_VERSION, repo_type="dataset")
             hub_api.create_tag(self.repo_id, tag=CODEBASE_VERSION, revision=branch, repo_type="dataset")
+
+    def push_to_gcs(
+        self,
+        bucket_name: str = "robot-445714_lerobot_train_data",
+        destination_prefix: str = "",
+        ignore_patterns: list[str] | None = None,
+    ) -> None:
+        """
+        Uploads the entire dataset directory (self.root) to the specified GCS bucket.
+        
+        Args:
+            bucket_name: Name of the GCS bucket.
+            destination_prefix: (Optional) A prefix (folder path) within the bucket.
+            ignore_patterns: (Optional) List of Unix shell-style patterns to ignore.
+        """
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        
+        for file_path in self.root.rglob("*"):
+            if file_path.is_file():
+                if ignore_patterns and any(
+                    fnmatch.fnmatch(str(file_path.relative_to(self.root)), pattern)
+                    for pattern in ignore_patterns
+                ):
+                    continue
+
+                blob_name = str(Path(destination_prefix) / file_path.relative_to(self.root))
+                blob = bucket.blob(blob_name)
+
+                if blob.exists():
+                    logging.info(f"Skipping {file_path} as it already exists in gs://{bucket_name}/{blob_name}")
+                    continue
+
+                logging.info(f"Uploading {file_path} to gs://{bucket_name}/{blob_name}")
+                blob.upload_from_filename(str(file_path))
 
     def pull_from_repo(
         self,
