@@ -454,25 +454,25 @@ class So100RobotConfig(ManipulatorRobotConfig):
                     "gripper": [6, "sts3215"],
                 },
             ),
-            "secondary": FeetechMotorsBusConfig(
-                port="COM6",
-                motors={
-                    # name: (index, model)
-                    "shoulder_pan": [1, "sts3215"],
-                    "shoulder_lift": [2, "sts3215"],
-                    "elbow_flex": [3, "sts3215"],
-                    "wrist_flex": [4, "sts3215"],
-                    "wrist_roll": [5, "sts3215"],
-                    "gripper": [6, "sts3215"],
-                },
-            ),
+            # "secondary": FeetechMotorsBusConfig(
+            #     port="COM6",
+            #     motors={
+            #         # name: (index, model)
+            #         "shoulder_pan": [1, "sts3215"],
+            #         "shoulder_lift": [2, "sts3215"],
+            #         "elbow_flex": [3, "sts3215"],
+            #         "wrist_flex": [4, "sts3215"],
+            #         "wrist_roll": [5, "sts3215"],
+            #         "gripper": [6, "sts3215"],
+            #     },
+            # ),
         }
     )
 
     follower_arms: dict[str, MotorsBusConfig] = field(
         default_factory=lambda: {
             "main": FeetechMotorsBusConfig(
-                port="COM5",
+                port="COM4",
                 motors={
                     # name: (index, model)
                     "shoulder_pan": [1, "sts3215"],
@@ -483,47 +483,48 @@ class So100RobotConfig(ManipulatorRobotConfig):
                     "gripper": [6, "sts3215"],
                 },
             ),
-            "secondary": FeetechMotorsBusConfig(
-                port="COM7",
-                motors={
-                    # name: (index, model)
-                    "shoulder_pan": [1, "sts3215"],
-                    "shoulder_lift": [2, "sts3215"],
-                    "elbow_flex": [3, "sts3215"],
-                    "wrist_flex": [4, "sts3215"],
-                    "wrist_roll": [5, "sts3215"],
-                    "gripper": [6, "sts3215"],
-                },
-            ),
+            # "secondary": FeetechMotorsBusConfig(
+            #     port="COM7",
+            #     motors={
+            #         # name: (index, model)
+            #         "shoulder_pan": [1, "sts3215"],
+            #         "shoulder_lift": [2, "sts3215"],
+            #         "elbow_flex": [3, "sts3215"],
+            #         "wrist_flex": [4, "sts3215"],
+            #         "wrist_roll": [5, "sts3215"],
+            #         "gripper": [6, "sts3215"],
+            #     },
+            # ),
         }
     )
 
     cameras: dict[str, CameraConfig] = field(
         default_factory=lambda: {
-            "top": OpenCVCameraConfig(
+            "overview": OpenCVCameraConfig(
                 camera_index=1,
                 fps=30,
                 width=640,
                 height=480,
+                exposure=-10,
             ),
-            "side": OpenCVCameraConfig(
+            "gripper": OpenCVCameraConfig(
                 camera_index=2,
                 fps=30,
                 width=640,
                 height=480,
             ),
-            "new_side": OpenCVCameraConfig(
+            "top": OpenCVCameraConfig(
                 camera_index=3,
                 fps=30,
                 width=640,
                 height=480,
             ),
-            # "gripper": OpenCVCameraConfig(
-            #     camera_index=4,
-            #     fps=30,
-            #     width=640,
-            #     height=480,
-            # ),
+            "frontal": OpenCVCameraConfig(
+                camera_index=4,
+                fps=30,
+                width=640,
+                height=480,
+            ),
         }
     )
 

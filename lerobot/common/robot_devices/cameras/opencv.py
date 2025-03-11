@@ -247,6 +247,7 @@ class OpenCVCamera:
         self.fps = config.fps
         self.width = config.width
         self.height = config.height
+        self.exposure = config.exposure
         self.channels = config.channels
         self.color_mode = config.color_mode
         self.mock = config.mock
@@ -319,6 +320,9 @@ class OpenCVCamera:
             self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         if self.height is not None:
             self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        if self.exposure is not None:
+            self.camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+            self.camera.set(cv2.CAP_PROP_EXPOSURE, self.exposure)
 
         actual_fps = self.camera.get(cv2.CAP_PROP_FPS)
         actual_width = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
