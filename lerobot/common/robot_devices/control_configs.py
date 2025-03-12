@@ -75,8 +75,8 @@ class RecordControlConfig(ControlConfig):
     private: bool = True
     # Add tags to your dataset on the hub.
     tags: list[str] | None = None
-    # Upload dataset to GCS Bucket.
-    push_to_gcs: bool = True
+    # GCS bucket to store the dataset. 
+    gcs_bucket_name: str | None = None
     # Number of subprocesses handling the saving of frames as PNG. Set to 0 to use threads only;
     # set to ≥1 to use subprocesses, each using threads to write images. The best number of processes
     # and threads depends on your system. We recommend 4 threads per camera with 0 processes.

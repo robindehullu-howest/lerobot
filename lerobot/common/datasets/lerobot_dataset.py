@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import contextlib
-import posixpath
+import subprocess
 import logging
 import shutil
 from pathlib import Path
@@ -576,38 +576,24 @@ class LeRobotDataset(torch.utils.data.Dataset):
 
     def push_to_gcs(
         self,
-        bucket_name: str = "",
-        destination_prefix: str = "",
-        ignore_patterns: list[str] | None = None,
+        bucket_name: str,
     ) -> None:
         """
         Uploads the entire dataset directory (self.root) to the specified GCS bucket.
         
         Args:
-            bucket_name: Name of the GCS bucket.
-            destination_prefix: (Optional) A prefix (folder path) within the bucket.
-            ignore_patterns: (Optional) List of Unix shell-style patterns to ignore.
+            bucket_name: Name of the GCS bucket to upload the dataset to.
         """
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        
-        for file_path in self.root.rglob("*"):
-            if file_path.is_file():
-                if ignore_patterns and any(
-                    fnmatch.fnmatch(str(file_path.relative_to(self.root)), pattern)
-                    for pattern in ignore_patterns
-                ):
-                    continue
+        local_dir = str(self.root)
+        uri = f"gs://{bucket_name}/{self.repo_id}"
 
-                blob_name = posixpath.join(destination_prefix, file_path.relative_to(self.root).as_posix())
-                blob = bucket.blob(blob_name)
+        command = ["gsutil", "-m", "rsync", "-r", local_dir, uri]
+        result = subprocess.run(command, capture_output=True, text=True)
 
-                if blob.exists():
-                    logging.info(f"Skipping {file_path} as it already exists in gs://{bucket_name}/{blob_name}")
-                    continue
-
-                logging.info(f"Uploading {file_path} to gs://{bucket_name}/{blob_name}")
-                blob.upload_from_filename(str(file_path))
+        if result.returncode != 0:
+            logging.warning(f"Failed to sync dataset to GCS bucket: {result.stderr}")
+        else:
+            logging.info(f"Synced dataset to {bucket_name}")
 
     def pull_from_repo(
         self,

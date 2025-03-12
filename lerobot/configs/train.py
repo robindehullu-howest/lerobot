@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime as dt
 import os
+import logging
+import subprocess
+import datetime as dt
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Type
@@ -71,6 +73,15 @@ class TrainPipelineConfig(HubMixin):
         # HACK: We parse again the cli args here to get the pretrained paths if there was some.
         policy_path = parser.get_path_arg("policy")
         if policy_path:
+            if policy_path.startswith("gs://"):
+                local_policy_path = "outputs/train/" + policy_path.split("gs://")[1]
+                if not Path(local_policy_path).exists():
+                    if self.download_policy_from_gcs(policy_path, local_policy_path):
+                        policy_path = local_policy_path
+                    else:
+                        logging.warning(f"Policy not found in GCS bucket: {policy_path}")
+                else:
+                    logging.info(f"Policy already present at {local_policy_path}")
             # Only load the policy config
             cli_overrides = parser.get_cli_overrides("policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
@@ -113,6 +124,21 @@ class TrainPipelineConfig(HubMixin):
         elif self.use_policy_training_preset and not self.resume:
             self.optimizer = self.policy.get_optimizer_preset()
             self.scheduler = self.policy.get_scheduler_preset()
+
+    def download_policy_from_gcs(self, gcs_policy_path: str, local_policy_path: str) -> bool:
+        gcs_uri = gcs_policy_path
+        local_dir = os.path.dirname(local_policy_path)
+
+        os.makedirs(local_dir, exist_ok=True)
+        command = ["gsutil", "rsync", "-r", gcs_uri, local_dir]
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            logging.warning(f"Failed to sync policy from GCS bucket: {result.stderr}")
+            return False
+        
+        logging.info(f"Synced policy from {gcs_uri} to {local_dir}")
+        return True
 
     @classmethod
     def __get_path_fields__(cls) -> list[str]:
