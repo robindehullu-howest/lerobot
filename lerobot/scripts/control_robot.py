@@ -56,7 +56,6 @@ python lerobot/scripts/control_robot.py \
     --control.single_task="Grasp a lego block and put it in the bin." \
     --control.repo_id=$USER/koch_test \
     --control.num_episodes=1 \
-    --control.push_to_hub=True
 ```
 
 - Visualize dataset:
@@ -88,6 +87,7 @@ python lerobot/scripts/control_robot.py record \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \
     --control.reset_time_s=10
+    --control.gcs_bucket_name=robot-445714_lerobot_train_data
 ```
 
 - For remote controlled robots like LeKiwi, run this script on the robot edge device (e.g. RaspBerryPi):
@@ -109,9 +109,9 @@ This might require a sudo permission to allow your terminal to monitor keyboard 
 - Train on this dataset with the ACT policy:
 ```bash
 python lerobot/scripts/train.py \
-  --dataset.repo_id=${HF_USER}/koch_pick_place_lego \
+  --dataset.repo_id=act_so100_pick_place_lego \
   --policy.type=act \
-  --output_dir=outputs/train/act_koch_pick_place_lego \
+  --output_dir=outputs/train/act_so100_pick_place_lego \
   --job_name=act_koch_pick_place_lego \
   --device=cuda \
   --wandb.enable=true
@@ -124,13 +124,14 @@ python lerobot/scripts/control_robot.py \
     --control.type=record \
     --control.fps=30 \
     --control.single_task="Grasp a lego block and put it in the bin." \
-    --control.repo_id=$USER/eval_act_koch_pick_place_lego \
+    --control.repo_id=eval_act_so100_pick_place_lego \
     --control.num_episodes=10 \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \
     --control.reset_time_s=10 \
     --control.push_to_hub=true \
-    --control.policy.path=outputs/train/act_koch_pick_place_lego/checkpoints/080000/pretrained_model
+    --control.gcs_bucket_name=robot-445714_lerobot_eval_data \
+    --control.policy.path=gs://robot-445714_lerobot_models/outputs/train/act_so100_pick_place_lego/checkpoints/080000/pretrained_model
 ```
 """
 
