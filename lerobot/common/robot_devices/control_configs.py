@@ -22,7 +22,8 @@ from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 
 import os
-from google.cloud import storage
+import logging
+import subprocess
 
 @dataclass
 class ControlConfig(draccus.ChoiceRegistry):
@@ -92,26 +93,29 @@ class RecordControlConfig(ControlConfig):
     # Resume recording on an existing dataset.
     resume: bool = False
 
-    def download_policy_from_gcs(self, bucket_name: str, gcs_policy_path: str, local_policy_path: str):
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        blob = bucket.blob(gcs_policy_path)
-        if not blob.exists():
-            logging.warning(f"Policy not found in GCS bucket: gs://{bucket_name}/{gcs_policy_path}")
+    def download_policy_from_gcs(self, gcs_policy_path: str, local_policy_path: str):
+        gcs_uri = gcs_policy_path
+        local_dir = os.path.dirname(local_policy_path)
+        os.makedirs(local_dir, exist_ok=True)
+        command = ["gsutil", "rsync", "-r", gcs_uri, local_dir]
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode != 0:
+            logging.warning(f"Failed to sync policy from GCS bucket: {result.stderr}")
             return False
-        os.makedirs(os.path.dirname(local_policy_path), exist_ok=True)
-        blob.download_to_filename(local_policy_path)
-        logging.info(f"Downloaded policy from gs://{bucket_name}/{gcs_policy_path} to {local_policy_path}")
+        logging.info(f"Synced policy from {gcs_uri} to {local_dir}")
         return True
 
     def __post_init__(self):
         # HACK: We parse again the cli args here to get the pretrained path if there was one.
         policy_path = parser.get_path_arg("control.policy")
         if policy_path:
-            bucket_name = "robot-445714_lerobot_models"
-            local_policy_path = f"output/train/{policy_path}"
-            if not Path(local_policy_path).exists():
-                self.download_policy_from_gcs(bucket_name, policy_path, local_policy_path)
+            if policy_path.startswith("gs://"):
+                local_policy_path = policy_path.split("gs://")[1]
+                if not Path(local_policy_path).exists():
+                    if self.download_policy_from_gcs(policy_path, local_policy_path):
+                        policy_path = local_policy_path
+                    else:
+                        logging.warning(f"Policy not found in GCS bucket: {policy_path}")
 
             cli_overrides = parser.get_cli_overrides("control.policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
