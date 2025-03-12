@@ -334,7 +334,8 @@ def record(
         dataset.push_to_hub(tags=cfg.tags, private=cfg.private)
 
     if cfg.push_to_gcs:
-        dataset.push_to_gcs(destination_prefix=dataset.repo_id)
+        bucket_name="robot-445714_lerobot_train_data" if policy is None else "robot-445714_lerobot_eval_data"
+        dataset.push_to_gcs(bucket_name=bucket_name, destination_prefix=dataset.repo_id)
 
     log_say("Exiting", cfg.play_sounds)
     return dataset

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import contextlib
+import posixpath
 import logging
 import shutil
 from pathlib import Path
@@ -575,7 +576,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
 
     def push_to_gcs(
         self,
-        bucket_name: str = "robot-445714_lerobot_train_data",
+        bucket_name: str = "",
         destination_prefix: str = "",
         ignore_patterns: list[str] | None = None,
     ) -> None:
@@ -598,7 +599,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 ):
                     continue
 
-                blob_name = str(Path(destination_prefix) / file_path.relative_to(self.root))
+                blob_name = posixpath.join(destination_prefix, file_path.relative_to(self.root).as_posix())
                 blob = bucket.blob(blob_name)
 
                 if blob.exists():

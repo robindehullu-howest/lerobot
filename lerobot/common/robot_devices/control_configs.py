@@ -24,6 +24,8 @@ from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.train import TrainPipelineConfig
 
+import os
+from google.cloud import storage
 
 @dataclass
 class ControlConfig(draccus.ChoiceRegistry):
@@ -98,10 +100,27 @@ class RecordControlConfig(ControlConfig):
     # Resume recording on an existing dataset.
     resume: bool = False
 
+    def download_policy_from_gcs(self, bucket_name: str, gcs_policy_path: str, local_policy_path: str):
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(gcs_policy_path)
+        if not blob.exists():
+            logging.warning(f"Policy not found in GCS bucket: gs://{bucket_name}/{gcs_policy_path}")
+            return False
+        os.makedirs(os.path.dirname(local_policy_path), exist_ok=True)
+        blob.download_to_filename(local_policy_path)
+        logging.info(f"Downloaded policy from gs://{bucket_name}/{gcs_policy_path} to {local_policy_path}")
+        return True
+
     def __post_init__(self):
         # HACK: We parse again the cli args here to get the pretrained path if there was one.
         policy_path = parser.get_path_arg("control.policy")
         if policy_path:
+            bucket_name = "robot-445714_lerobot_models"
+            local_policy_path = f"output/train/{policy_path}"
+            if not Path(local_policy_path).exists():
+                self.download_policy_from_gcs(bucket_name, policy_path, local_policy_path)
+
             cli_overrides = parser.get_cli_overrides("control.policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
             self.policy.pretrained_path = policy_path
