@@ -130,7 +130,7 @@ class TrainPipelineConfig(HubMixin):
         local_dir = os.path.dirname(local_policy_path)
 
         os.makedirs(local_dir, exist_ok=True)
-        command = ["gsutil", "rsync", "-r", gcs_uri, local_dir]
+        command = ["gsutil.cmd", "rsync", "-r", gcs_uri, local_dir]
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:

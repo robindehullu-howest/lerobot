@@ -67,7 +67,7 @@ python lerobot/scripts/visualize_dataset.py \
 
 - Replay this test episode:
 ```bash
-python lerobot/scripts/control_robot.py replay \
+python lerobot/scripts/control_robot.py \
     --robot.type=so100 \
     --control.type=replay \
     --control.fps=30 \
@@ -78,15 +78,16 @@ python lerobot/scripts/control_robot.py replay \
 - Record a full dataset in order to train a policy, with 2 seconds of warmup,
 30 seconds of recording for each episode, and 10 seconds to reset the environment in between episodes:
 ```bash
-python lerobot/scripts/control_robot.py record \
+python lerobot/scripts/control_robot.py \
     --robot.type=so100 \
     --control.type=record \
-    --control.fps 30 \
-    --control.repo_id=$USER/koch_pick_place_lego \
+    --control.fps=30 \
+    --control.single_task="Grasp a lego block and put it in the bin." \
+    --control.repo_id=$USER/so100_pick_place_lego \
     --control.num_episodes=50 \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \
-    --control.reset_time_s=10
+    --control.reset_time_s=10 \
     --control.gcs_bucket_name=robot-445714_lerobot_train_data
 ```
 
@@ -109,7 +110,7 @@ This might require a sudo permission to allow your terminal to monitor keyboard 
 - Train on this dataset with the ACT policy:
 ```bash
 python lerobot/scripts/train.py \
-  --dataset.repo_id=act_so100_pick_place_lego \
+  --dataset.repo_id=so100/act_pick_place_lego \
   --policy.type=act \
   --output_dir=outputs/train/act_so100_pick_place_lego \
   --job_name=act_koch_pick_place_lego \

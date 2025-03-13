@@ -587,7 +587,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         local_dir = str(self.root)
         uri = f"gs://{bucket_name}/{self.repo_id}"
 
-        command = ["gsutil", "-m", "rsync", "-r", local_dir, uri]
+        command = ["gsutil.cmd", "-m", "rsync", "-r", local_dir, uri]
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
