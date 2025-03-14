@@ -587,8 +587,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
         local_dir = str(self.root)
         uri = f"gs://{bucket_name}/{self.repo_id}"
 
-        command = ["gsutil.cmd", "-m", "rsync", "-r", local_dir, uri]
-        result = subprocess.run(command, capture_output=True, text=True)
+        command = ["gsutil", "-m", "rsync", "-r", local_dir, uri]
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
         if result.returncode != 0:
             logging.warning(f"Failed to sync dataset to GCS bucket: {result.stderr}")

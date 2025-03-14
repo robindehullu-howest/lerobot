@@ -125,7 +125,7 @@ python lerobot/scripts/control_robot.py \
     --control.type=record \
     --control.fps=30 \
     --control.single_task="Grasp a lego block and put it in the bin." \
-    --control.repo_id=eval_act_so100_pick_place_lego \
+    --control.repo_id=so100/eval_act_so100_pick_place_lego \
     --control.num_episodes=10 \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \

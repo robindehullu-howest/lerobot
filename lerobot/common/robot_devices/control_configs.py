@@ -95,14 +95,16 @@ class RecordControlConfig(ControlConfig):
 
     def download_policy_from_gcs(self, gcs_policy_path: str, local_policy_path: str):
         gcs_uri = gcs_policy_path
-        local_dir = os.path.dirname(local_policy_path)
-        os.makedirs(local_dir, exist_ok=True)
-        command = ["gsutil", "rsync", "-r", gcs_uri, local_dir]
-        result = subprocess.run(command, capture_output=True, text=True)
+        
+        os.makedirs(local_policy_path, exist_ok=True)
+
+        command = ["gsutil", "-m", "rsync", "-r", gcs_uri, local_policy_path]
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
         if result.returncode != 0:
             logging.warning(f"Failed to sync policy from GCS bucket: {result.stderr}")
             return False
-        logging.info(f"Synced policy from {gcs_uri} to {local_dir}")
+        logging.info(f"Synced policy from {gcs_uri} to {local_policy_path}")
         return True
 
     def __post_init__(self):
@@ -110,12 +112,14 @@ class RecordControlConfig(ControlConfig):
         policy_path = parser.get_path_arg("control.policy")
         if policy_path:
             if policy_path.startswith("gs://"):
-                local_policy_path = policy_path.split("gs://")[1]
+                sub_dir = policy_path.split("gs://")[1].split('/', 1)[1]
+                local_policy_path = os.path.join("outputs", "train", sub_dir)
+
                 if not Path(local_policy_path).exists():
-                    if self.download_policy_from_gcs(policy_path, local_policy_path):
-                        policy_path = local_policy_path
-                    else:
+                    if not self.download_policy_from_gcs(policy_path, local_policy_path):
                         logging.warning(f"Policy not found in GCS bucket: {policy_path}")
+                        
+                policy_path = local_policy_path
 
             cli_overrides = parser.get_cli_overrides("control.policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)

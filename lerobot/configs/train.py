@@ -130,8 +130,8 @@ class TrainPipelineConfig(HubMixin):
         local_dir = os.path.dirname(local_policy_path)
 
         os.makedirs(local_dir, exist_ok=True)
-        command = ["gsutil.cmd", "rsync", "-r", gcs_uri, local_dir]
-        result = subprocess.run(command, capture_output=True, text=True)
+        command = ["gsutil", "-m", "rsync", "-r", gcs_uri, local_dir]
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
         if result.returncode != 0:
             logging.warning(f"Failed to sync policy from GCS bucket: {result.stderr}")
@@ -162,7 +162,7 @@ class TrainPipelineConfig(HubMixin):
         proxies: dict | None = None,
         token: str | bool | None = None,
         cache_dir: str | Path | None = None,
-        local_files_only: bool = False,
+        local_files_only: bool = True,
         revision: str | None = None,
         **kwargs,
     ) -> "TrainPipelineConfig":
