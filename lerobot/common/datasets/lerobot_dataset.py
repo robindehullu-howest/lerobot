@@ -90,12 +90,24 @@ class LeRobotDatasetMetadata:
         force_cache_sync: bool = False,
     ):
         self.repo_id = repo_id
+        bucket_name = None
+
+        # Check if the repo_id is a GCS bucket
+        if repo_id.startswith("gs://"):
+            bucket_name = repo_id.split("/")[2]
+            self.repo_id = repo_id.split("/", 3)[-1]
+
         self.revision = revision if revision else CODEBASE_VERSION
-        self.root = Path(root) if root is not None else HF_LEROBOT_HOME / repo_id
+        self.root = Path(root) if root is not None else HF_LEROBOT_HOME / self.repo_id
 
         try:
             if force_cache_sync:
                 raise FileNotFoundError
+
+            # Handle GCS paths
+            if bucket_name is not None:
+                self.pull_from_gcs(bucket_name)
+
             self.load_metadata()
         except (FileNotFoundError, NotADirectoryError):
             if is_valid_version(self.revision):
@@ -130,6 +142,22 @@ class LeRobotDatasetMetadata:
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
+
+    def pull_from_gcs(self, bucket_name: str) -> None:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+
+        prefix = f"{self.repo_id}/meta/"
+        blobs = bucket.list_blobs(prefix=prefix)
+
+        local_meta_dir = self.root / self.repo_id / "meta"
+        local_meta_dir.mkdir(exist_ok=True, parents=True)
+
+        for blob in blobs:
+            relative_path = Path(blob.name)
+            local_path = self.root / relative_path
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(local_path)
 
     @property
     def _version(self) -> packaging.version.Version:
@@ -472,7 +500,15 @@ class LeRobotDataset(torch.utils.data.Dataset):
         """
         super().__init__()
         self.repo_id = repo_id
-        self.root = Path(root) if root else HF_LEROBOT_HOME / repo_id
+
+        bucket_name = None
+
+        # Check if the repo_id is a GCS bucket
+        if self.repo_id.startswith("gs://"):
+            bucket_name = self.repo_id.split("/")[2]
+            self.repo_id = self.repo_id.split("/", 3)[-1]
+
+        self.root = Path(root) if root else HF_LEROBOT_HOME / self.repo_id
         self.image_transforms = image_transforms
         self.delta_timestamps = delta_timestamps
         self.episodes = episodes
@@ -500,6 +536,10 @@ class LeRobotDataset(torch.utils.data.Dataset):
             if force_cache_sync:
                 raise FileNotFoundError
             assert all((self.root / fpath).is_file() for fpath in self.get_episodes_file_paths())
+
+            if bucket_name is not None:
+                self.pull_from_gcs(bucket_name)
+
             self.hf_dataset = self.load_hf_dataset()
         except (AssertionError, FileNotFoundError, NotADirectoryError):
             self.revision = get_safe_version(self.repo_id, self.revision)
@@ -609,6 +649,22 @@ class LeRobotDataset(torch.utils.data.Dataset):
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
+
+    def pull_from_gcs(self, bucket_name) -> None:
+        """
+        Downloads the entire dataset directory from the specified GCS bucket to the local cache.
+        """
+        client = storage.Client()
+
+        bucket = client.get_bucket(bucket_name)
+        blobs = bucket.list_blobs(prefix=self.repo_id)
+
+        for blob in blobs:
+            relative_path = Path(blob.name)
+            local_path = self.root / relative_path
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(local_path)
+
 
     def download_episodes(self, download_videos: bool = True) -> None:
         """Downloads the dataset from the given 'repo_id' at the provided version. If 'episodes' is given, this
