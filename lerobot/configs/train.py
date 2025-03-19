@@ -31,6 +31,8 @@ from lerobot.configs import parser
 from lerobot.configs.default import DatasetConfig, EvalConfig, WandBConfig
 from lerobot.configs.policies import PreTrainedConfig
 
+from google.cloud import storage
+
 TRAIN_CONFIG_NAME = "train_config.json"
 
 
@@ -74,14 +76,10 @@ class TrainPipelineConfig(HubMixin):
         policy_path = parser.get_path_arg("policy")
         if policy_path:
             if policy_path.startswith("gs://"):
-                local_policy_path = "outputs/train/" + policy_path.split("gs://")[1]
-                if not Path(local_policy_path).exists():
-                    if self.download_policy_from_gcs(policy_path, local_policy_path):
-                        policy_path = local_policy_path
-                    else:
-                        logging.warning(f"Policy not found in GCS bucket: {policy_path}")
-                else:
-                    logging.info(f"Policy already present at {local_policy_path}")
+                bucket_name = policy_path.split("/")[2]
+                policy_name = policy_path.split("/", 3)[-1]
+                policy_path = self.pull_from_bucket(bucket_name, policy_name)
+
             # Only load the policy config
             cli_overrides = parser.get_cli_overrides("policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
@@ -127,20 +125,18 @@ class TrainPipelineConfig(HubMixin):
             self.optimizer = self.policy.get_optimizer_preset()
             self.scheduler = self.policy.get_scheduler_preset()
 
-    def download_policy_from_gcs(self, gcs_policy_path: str, local_policy_path: str) -> bool:
-        gcs_uri = gcs_policy_path
-        local_dir = os.path.dirname(local_policy_path)
-
-        os.makedirs(local_dir, exist_ok=True)
-        command = ["gsutil", "-m", "rsync", "-r", gcs_uri, local_dir]
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            logging.warning(f"Failed to sync policy from GCS bucket: {result.stderr}")
-            return False
+    def pull_from_bucket(self, bucket_name: str, policy_name: str):
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blobs = bucket.list_blobs(prefix=policy_name)
         
-        logging.info(f"Synced policy from {gcs_uri} to {local_dir}")
-        return True
+        for blob in blobs:
+            relative_path = Path(blob.name)
+            local_path = "output" / "train" / relative_path
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(local_path)
+
+        return "output" / "train" / policy_name
 
     @classmethod
     def __get_path_fields__(cls) -> list[str]:

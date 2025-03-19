@@ -625,16 +625,17 @@ class LeRobotDataset(torch.utils.data.Dataset):
         Args:
             bucket_name: Name of the GCS bucket to upload the dataset to.
         """
-        local_dir = str(self.root)
-        uri = f"gs://{bucket_name}/{self.repo_id}"
+        client = storage.Client()
+        bucket = client.get_bucket(bucket_name)
 
-        command = ["gsutil", "-m", "rsync", "-r", local_dir, uri]
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        for local_file in self.root.rglob("*"):
+            if local_file.is_file():
+                relative_path = local_file.relative_to(self.root)
+                blob_name = f"{self.repo_id}/{relative_path}"
 
-        if result.returncode != 0:
-            logging.warning(f"Failed to sync dataset to GCS bucket: {result.stderr}")
-        else:
-            logging.info(f"Synced dataset to {bucket_name}")
+                blob = bucket.blob(blob_name)
+                blob.upload_from_filename(str(local_file))
+                logging.info(f"Uploaded {local_file} to gs://{bucket_name}/{blob_name}")
 
     def pull_from_repo(
         self,
