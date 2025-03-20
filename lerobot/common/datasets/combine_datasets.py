@@ -31,6 +31,11 @@ def parse_arguments() -> argparse.Namespace:
         required=True,
         help="The repository ID for the combined dataset."
     )
+    parser.add_argument(
+        "--use_symlinks",
+        action="store_true",
+        help="Flag to indicate whether to use symlinks for data and videos."
+    )
     return parser.parse_args()
 
 def load_metadata(repo_id: str) -> Optional[Dict[str, Any]]:
@@ -208,6 +213,69 @@ def symlink_videos(repo_ids: List[str], combined_repo_id: str) -> None:
                 logging.info(f"Created symlink from {src_path} to {dst_path}.")
                 subdir_indices[subdir] += 1
 
+def copy_data(repo_ids: List[str], combined_repo_id: str) -> None:
+    """Copy video files to the combined repository with sequential filenames."""
+    
+    combined_data_dir = os.path.join(HF_LEROBOT_HOME, combined_repo_id, DATA_DIR, "chunk-000")
+
+    if os.path.exists(combined_data_dir):
+        shutil.rmtree(combined_data_dir)
+    os.makedirs(combined_data_dir)
+
+    current_index = 0
+
+    for repo_id in repo_ids:
+        data_dir = os.path.join(HF_LEROBOT_HOME, repo_id, DATA_DIR, "chunk-000")
+        if not os.path.exists(data_dir):
+            logging.warning(f"Data directory {data_dir} does not exist. Skipping.")
+            continue
+
+        for data_file in os.listdir(data_dir):
+            src_path = os.path.join(data_dir, data_file)
+
+            new_filename = f"episode_{current_index:06d}.parquet"
+            dst_path = os.path.join(combined_data_dir, new_filename)
+
+            shutil.copy(src_path, dst_path)
+            logging.info(f"Copied {src_path} to {dst_path}.")
+            current_index += 1
+
+def copy_videos(repo_ids: List[str], combined_repo_id: str) -> None:
+    """Copy video files to the combined repository with sequential filenames, accounting for subdirectories."""
+    
+    combined_video_dir = os.path.join(HF_LEROBOT_HOME, combined_repo_id, VIDEO_DIR, "chunk-000")
+
+    if os.path.exists(combined_video_dir):
+        shutil.rmtree(combined_video_dir)
+    os.makedirs(combined_video_dir)
+
+    subdir_indices = {}
+
+    for repo_id in repo_ids:
+        video_dir = os.path.join(HF_LEROBOT_HOME, repo_id, VIDEO_DIR, "chunk-000")
+        if not os.path.exists(video_dir):
+            logging.warning(f"Video directory {video_dir} does not exist. Skipping.")
+            continue
+
+        for subdir in os.listdir(video_dir):
+            subdir_path = os.path.join(video_dir, subdir)
+
+            combined_subdir_path = os.path.join(combined_video_dir, subdir)
+            os.makedirs(combined_subdir_path, exist_ok=True)
+
+            if subdir not in subdir_indices:
+                subdir_indices[subdir] = 0
+
+            for video_file in os.listdir(subdir_path):
+                src_path = os.path.join(subdir_path, video_file)
+
+                new_filename = f"episode_{subdir_indices[subdir]:06d}.mp4"
+                dst_path = os.path.join(combined_subdir_path, new_filename)
+
+                shutil.copy(src_path, dst_path)
+                logging.info(f"Copied {src_path} to {dst_path}.")
+                subdir_indices[subdir] += 1
+
 def main() -> None:
     """Main function to combine datasets."""
     args = parse_arguments()
@@ -216,8 +284,14 @@ def main() -> None:
 
     logging.info(f"Combining datasets from {repo_ids} into {combined_repo_id}.")
     copy_metadata(repo_ids, combined_repo_id)
-    symlink_data(repo_ids, combined_repo_id)
-    symlink_videos(repo_ids, combined_repo_id)
+
+    if args.use_symlinks:
+        symlink_data(repo_ids, combined_repo_id)
+        symlink_videos(repo_ids, combined_repo_id)
+    else:
+        copy_data(repo_ids, combined_repo_id)
+        copy_videos(repo_ids, combined_repo_id)
+
 
 if __name__ == "__main__":
     main()
