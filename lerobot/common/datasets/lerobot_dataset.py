@@ -150,14 +150,15 @@ class LeRobotDatasetMetadata:
         prefix = f"{self.repo_id}/meta/"
         blobs = bucket.list_blobs(prefix=prefix)
 
-        local_meta_dir = self.root / self.repo_id / "meta"
+        local_meta_dir = self.root / "meta"
         local_meta_dir.mkdir(exist_ok=True, parents=True)
 
         for blob in blobs:
-            relative_path = Path(blob.name)
+            relative_path = blob.name[len(f"{self.repo_id}/"):]
             local_path = self.root / relative_path
             local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(local_path)
+            logging.info(f"Downloaded gs://{bucket_name}/{blob.name} to {local_path}")
 
     @property
     def _version(self) -> packaging.version.Version:
@@ -533,12 +534,12 @@ class LeRobotDataset(torch.utils.data.Dataset):
 
         # Load actual data
         try:
+            if bucket_name is not None:
+                self.pull_from_gcs(bucket_name)
+
             if force_cache_sync:
                 raise FileNotFoundError
             assert all((self.root / fpath).is_file() for fpath in self.get_episodes_file_paths())
-
-            if bucket_name is not None:
-                self.pull_from_gcs(bucket_name)
 
             self.hf_dataset = self.load_hf_dataset()
         except (AssertionError, FileNotFoundError, NotADirectoryError):
@@ -656,15 +657,17 @@ class LeRobotDataset(torch.utils.data.Dataset):
         Downloads the entire dataset directory from the specified GCS bucket to the local cache.
         """
         client = storage.Client()
-
         bucket = client.get_bucket(bucket_name)
-        blobs = bucket.list_blobs(prefix=self.repo_id)
+
+        prefix = f"{self.repo_id}/"
+        blobs = bucket.list_blobs(prefix=prefix)
 
         for blob in blobs:
-            relative_path = Path(blob.name)
+            relative_path = blob.name[len(prefix):]
             local_path = self.root / relative_path
             local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(local_path)
+            logging.info(f"Downloaded gs://{bucket_name}/{blob.name} to {local_path}")
 
 
     def download_episodes(self, download_videos: bool = True) -> None:
