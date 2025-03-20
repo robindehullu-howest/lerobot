@@ -67,6 +67,7 @@ class TrainPipelineConfig(HubMixin):
     scheduler: LRSchedulerConfig | None = None
     eval: EvalConfig = field(default_factory=EvalConfig)
     wandb: WandBConfig = field(default_factory=WandBConfig)
+    gcs_bucket: str | None = None
 
     def __post_init__(self):
         self.checkpoint_path = None
