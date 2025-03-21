@@ -167,7 +167,7 @@ def symlink_data(repo_ids: List[str], combined_repo_id: str) -> None:
             logging.warning(f"Data directory {data_dir} does not exist. Skipping.")
             continue
 
-        for data_file in os.listdir(data_dir):
+        for data_file in sorted(os.listdir(data_dir)):
             src_path = os.path.join(data_dir, data_file)
 
             new_filename = f"episode_{current_index:06d}.parquet"
@@ -194,7 +194,7 @@ def symlink_videos(repo_ids: List[str], combined_repo_id: str) -> None:
             logging.warning(f"Video directory {video_dir} does not exist. Skipping.")
             continue
 
-        for subdir in os.listdir(video_dir):
+        for subdir in sorted(os.listdir(video_dir)):
             subdir_path = os.path.join(video_dir, subdir)
 
             combined_subdir_path = os.path.join(combined_video_dir, subdir)
@@ -203,7 +203,7 @@ def symlink_videos(repo_ids: List[str], combined_repo_id: str) -> None:
             if subdir not in subdir_indices:
                 subdir_indices[subdir] = 0
 
-            for video_file in os.listdir(subdir_path):
+            for video_file in sorted(os.listdir(subdir_path)):
                 src_path = os.path.join(subdir_path, video_file)
 
                 new_filename = f"episode_{subdir_indices[subdir]:06d}.mp4"
@@ -230,7 +230,7 @@ def copy_data(repo_ids: List[str], combined_repo_id: str) -> None:
             logging.warning(f"Data directory {data_dir} does not exist. Skipping.")
             continue
 
-        for data_file in os.listdir(data_dir):
+        for data_file in sorted(os.listdir(data_dir)):
             src_path = os.path.join(data_dir, data_file)
 
             new_filename = f"episode_{current_index:06d}.parquet"
@@ -257,7 +257,7 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str) -> None:
             logging.warning(f"Video directory {video_dir} does not exist. Skipping.")
             continue
 
-        for subdir in os.listdir(video_dir):
+        for subdir in sorted(os.listdir(video_dir)):
             subdir_path = os.path.join(video_dir, subdir)
 
             combined_subdir_path = os.path.join(combined_video_dir, subdir)
@@ -266,7 +266,7 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str) -> None:
             if subdir not in subdir_indices:
                 subdir_indices[subdir] = 0
 
-            for video_file in os.listdir(subdir_path):
+            for video_file in sorted(os.listdir(subdir_path)):
                 src_path = os.path.join(subdir_path, video_file)
 
                 new_filename = f"episode_{subdir_indices[subdir]:06d}.mp4"
