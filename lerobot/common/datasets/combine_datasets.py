@@ -68,6 +68,9 @@ def merge_info_files(repo_ids: List[str]) -> Optional[Dict[str, Any]]:
         combined_info["total_frames"] += info_data.get("total_frames", 0)
         combined_info["total_videos"] += info_data.get("total_videos", 0)
 
+        if "splits" in combined_info and "train" in combined_info["splits"]:
+            combined_info["splits"]["train"] = f"0:{combined_info['total_episodes']}"
+            
     return combined_info
 
 def copy_tasks_file(repo_ids: List[str], combined_meta_dir: str) -> bool:
