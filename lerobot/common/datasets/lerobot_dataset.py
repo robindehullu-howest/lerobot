@@ -631,9 +631,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
 
         for local_file in self.root.rglob("*"):
             if local_file.is_file():
-                relative_path = local_file.relative_to(self.root)
+                relative_path = local_file.relative_to(self.root).as_posix()
                 blob_name = f"{self.repo_id}/{relative_path}"
-
                 blob = bucket.blob(blob_name)
                 blob.upload_from_filename(str(local_file))
                 logging.info(f"Uploaded {local_file} to gs://{bucket_name}/{blob_name}")
