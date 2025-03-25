@@ -132,7 +132,7 @@ python lerobot/scripts/control_robot.py \
     --control.reset_time_s=10 \
     --control.push_to_hub=true \
     --control.gcs_bucket_name=robot-445714_lerobot_eval_data \
-    --control.policy.path=gs://robot-445714_lerobot_models/outputs/train/act_so100_pick_place_lego/checkpoints/080000/pretrained_model
+    --control.policy.path=gs://robot-445714_lerobot_models/act_so100_pick_place_lego/checkpoints/080000/pretrained_model
 ```
 """
 
