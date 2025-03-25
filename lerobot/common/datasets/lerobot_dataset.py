@@ -634,8 +634,9 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 relative_path = local_file.relative_to(self.root).as_posix()
                 blob_name = f"{self.repo_id}/{relative_path}"
                 blob = bucket.blob(blob_name)
-                blob.upload_from_filename(str(local_file))
-                logging.info(f"Uploaded {local_file} to gs://{bucket_name}/{blob_name}")
+                if not blob.exists():
+                    blob.upload_from_filename(str(local_file))
+                    logging.info(f"Uploaded {blob_name} to {bucket_name}")
 
     def pull_from_repo(
         self,

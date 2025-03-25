@@ -292,8 +292,9 @@ def train(cfg: TrainPipelineConfig):
         for file_path in output_dir.rglob("*"):
             if file_path.is_file():
                 blob = bucket.blob(file_path.relative_to(output_dir.parent).as_posix())
-                blob.upload_from_filename(str(file_path))
-                logging.info(f"Uploaded {file_path} to {cfg.gcs_bucket}/{blob.name}")
+                if not blob.exists:
+                    blob.upload_from_filename(str(file_path))
+                    logging.info(f"Uploaded {blob.name} to {cfg.gcs_bucket}")
 
     logging.info("End of training")
 
