@@ -96,17 +96,24 @@ class RecordControlConfig(ControlConfig):
     resume: bool = False
 
     def pull_from_bucket(self, bucket_name: str, policy_name: str):
+        output_dir = Path("outputs") / "train"
+
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
         blobs = bucket.list_blobs(prefix=policy_name)
         
         for blob in blobs:
+            if blob.name.endswith("/"):
+                continue
+
             relative_path = Path(blob.name)
-            local_path = "output" / "train" / relative_path
+            local_path = output_dir / relative_path
             local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(local_path)
 
-        return "output" / "train" / policy_name
+        resolved_path = (output_dir / policy_name).as_posix()
+        logging.info(f"Downloaded policy to: {resolved_path}")
+        return resolved_path
 
 
     def __post_init__(self):
@@ -115,8 +122,8 @@ class RecordControlConfig(ControlConfig):
         if policy_path:
             if policy_path.startswith("gs://"):
                 bucket_name = policy_path.split("/")[2]
-                policy_name = policy_path.split("/", 3)[-1]
-                policy_path = self.pull_from_bucket(bucket_name, policy_name)
+                relative_path = policy_path.split("/", 3)[-1]
+                policy_path = self.pull_from_bucket(bucket_name, relative_path)
 
             cli_overrides = parser.get_cli_overrides("control.policy")
             self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
