@@ -12,9 +12,9 @@ MODEL_OUTPUT_DIR = Path("outputs/train")
 def parse_args():
     parser = argparse.ArgumentParser(description="Pull or push dataset from/to GCS bucket.")
     parser.add_argument("--bucket_name", type=str, required=True, help="Name of the GCS bucket.")
-    parser.add_argument("--identifier", type=str, required=True, help="Repository ID to pull or push.")
     parser.add_argument("--action", type=str, choices=["pull", "push"], required=True, help="Action to perform: 'pull' or 'push'.")
     parser.add_argument("--content_type", type=str, choices=["dataset", "model"], required=True, help="Type of content to pull or push: 'dataset' or 'model'.")
+    parser.add_argument("--identifier", type=str, required=True, help="Repository ID to pull or push.")
     return parser.parse_args()
 
 def pull_dataset_from_gcs(bucket_name, repo_id) -> None:
