@@ -46,7 +46,7 @@ def cfg_to_group(cfg: TrainPipelineConfig, return_list: bool = False) -> list[st
 def get_wandb_run_id_from_filesystem(log_dir: Path) -> str:
     # Get the WandB run ID.
     paths = glob(str(log_dir / "wandb/run-*/run-*.wandb"))
-    if len(paths) != 1:
+    if paths == []:
         raise RuntimeError("Couldn't get the previous WandB run ID for run resumption.")
     match = re.search(r"run-([^\.]+).wandb", Path(paths[0]).name)
     if match is None:
