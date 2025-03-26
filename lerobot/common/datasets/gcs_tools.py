@@ -32,8 +32,9 @@ def pull_dataset_from_gcs(bucket_name: str, repo_id: str, force_overwrite: bool 
     for blob in blobs:
         relative_path = blob.name[len(prefix):]
         local_path = root / relative_path
+        parent_dir_name = Path(relative_path).parent.name
 
-        if not force_overwrite and local_path.exists():
+        if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
             continue
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -55,8 +56,8 @@ def push_dataset_to_gcs(bucket_name: str, repo_id: str, force_overwrite: bool = 
         relative_path = local_path.relative_to(root).as_posix()
         blob_name = f"{repo_id}/{relative_path}"
         blob = bucket.blob(blob_name)
-
         parent_dir_name = Path(relative_path).parent.name
+
         if not force_overwrite and blob.exists() and parent_dir_name != "meta":
             continue
         
