@@ -56,7 +56,8 @@ def push_dataset_to_gcs(bucket_name: str, repo_id: str, force_overwrite: bool = 
         blob_name = f"{repo_id}/{relative_path}"
         blob = bucket.blob(blob_name)
 
-        if not force_overwrite and blob.exists():
+        parent_dir_name = Path(relative_path).parent.name
+        if not force_overwrite and blob.exists() and parent_dir_name != "meta":
             continue
         
         blob.upload_from_filename(local_path)

@@ -621,7 +621,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         bucket_name: str,
     ) -> None:
         """
-        Uploads the entire dataset directory (self.root) to the specified GCS bucket.
+        Uploads the dataset directory to the specified GCS bucket.
         
         Args:
             bucket_name: Name of the GCS bucket to upload the dataset to.
@@ -630,13 +630,19 @@ class LeRobotDataset(torch.utils.data.Dataset):
         bucket = client.get_bucket(bucket_name)
 
         for local_file in self.root.rglob("*"):
-            if local_file.is_file():
-                relative_path = local_file.relative_to(self.root).as_posix()
-                blob_name = f"{self.repo_id}/{relative_path}"
-                blob = bucket.blob(blob_name)
-                if not blob.exists():
-                    blob.upload_from_filename(str(local_file))
-                    logging.info(f"Uploaded {blob_name} to {bucket_name}")
+            if not local_file.is_file():
+                continue
+
+            relative_path = local_file.relative_to(self.root).as_posix()
+            blob_name = f"{self.repo_id}/{relative_path}"
+            blob = bucket.blob(blob_name)
+
+            parent_dir_name = Path(relative_path).parent.name
+            if blob.exists() and parent_dir_name != "meta":
+                continue
+            
+            blob.upload_from_filename(str(local_file))
+            logging.info(f"Uploaded {blob_name} to {bucket_name}")
 
     def pull_from_repo(
         self,
