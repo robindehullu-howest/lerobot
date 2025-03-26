@@ -15,6 +15,7 @@
 # limitations under the License.
 import logging
 import time
+from pathlib import Path
 from contextlib import nullcontext
 from pprint import pformat
 from typing import Any
@@ -109,6 +110,8 @@ def update_policy(
 def train(cfg: TrainPipelineConfig):
     cfg.validate()
     logging.info(pformat(cfg.to_dict()))
+
+    Path(cfg.output_dir).mkdir(parents=True, exist_ok=True)
 
     if cfg.wandb.enable and cfg.wandb.project:
         wandb_logger = WandBLogger(cfg)
@@ -283,7 +286,6 @@ def train(cfg: TrainPipelineConfig):
 
     if cfg.gcs_bucket is not None:
         from google.cloud import storage
-        from pathlib import Path
 
         client = storage.Client()
         bucket = client.get_bucket(cfg.gcs_bucket)
