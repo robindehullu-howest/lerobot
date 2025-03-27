@@ -28,7 +28,7 @@ def pull_dataset_from_gcs(bucket_name: str, dataset_dir: str, force_overwrite: b
 
     dataset_dir = Path(dataset_dir)
     
-    prefix = dataset_dir.as_posix().split("/")[-2:].join("/").append("/")
+    prefix = '/'.join(dataset_dir.as_posix().split("/")[-2:]) + '/'
     blobs = bucket.list_blobs(prefix=prefix)
 
     for blob in blobs:
@@ -80,7 +80,7 @@ def pull_model_from_gcs(bucket_name: str, model_name: str, force_overwrite: bool
     blobs = bucket.list_blobs(prefix=prefix)
     
     for blob in blobs:
-        if blob.name.endswith("/"):
+        if blob.name.endswith('/'):
             continue
         
         local_path = MODEL_OUTPUT_DIR / blob.name
@@ -103,7 +103,7 @@ def push_model_to_gcs(bucket_name: str, model_dir: str, force_overwrite: bool = 
     bucket = client.get_bucket(bucket_name)
 
     model_dir = Path(model_dir)
-    model_home_dir= model_dir.as_posix().split("/")[:-2].join("/")
+    model_home_dir = '/'.join(model_dir.as_posix().split('/')[:-2])
 
     for local_path in model_dir.rglob("*"):
         if local_path.is_dir():
