@@ -244,6 +244,11 @@ def train(cfg: TrainPipelineConfig):
             logging.info(f"Checkpoint policy after step {step}")
             checkpoint_dir = get_step_checkpoint_dir(cfg.output_dir, cfg.steps, step)
             save_checkpoint(checkpoint_dir, step, cfg, policy, optimizer, lr_scheduler)
+
+            if cfg.gcs_bucket is not None:
+                from lerobot.common.datasets.gcs_utils import push_model_to_gcs
+                push_model_to_gcs(cfg.gcs_bucket, cfg.output_dir)
+
             update_last_checkpoint(checkpoint_dir)
             if wandb_logger:
                 wandb_logger.log_policy(checkpoint_dir)
@@ -283,20 +288,6 @@ def train(cfg: TrainPipelineConfig):
 
     if eval_env:
         eval_env.close()
-
-    if cfg.gcs_bucket is not None:
-        from google.cloud import storage
-
-        client = storage.Client()
-        bucket = client.get_bucket(cfg.gcs_bucket)
-        
-        output_dir = Path(cfg.output_dir)
-        for file_path in output_dir.rglob("*"):
-            if file_path.is_file():
-                blob = bucket.blob(file_path.relative_to(output_dir.parent).as_posix())
-                if not blob.exists:
-                    blob.upload_from_filename(str(file_path))
-                    logging.info(f"Uploaded {blob.name} to {cfg.gcs_bucket}")
 
     logging.info("End of training")
 
