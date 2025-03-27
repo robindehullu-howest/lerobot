@@ -18,20 +18,22 @@ def parse_args():
     parser.add_argument("--force_overwrite", action="store_true", help="Overwrite existing files.")
     return parser.parse_args()
 
-def pull_dataset_from_gcs(bucket_name: str, repo_id: str, force_overwrite: bool = False) -> None:
+
+def pull_dataset_from_gcs(bucket_name: str, dataset_dir: str, force_overwrite: bool = False) -> None:
     """
     Downloads the entire dataset directory from the specified GCS bucket to the local cache.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-    root = HF_LEROBOT_HOME / repo_id
 
-    prefix = f"{repo_id}/"
+    dataset_dir = Path(dataset_dir)
+    
+    prefix = dataset_dir.as_posix().split("/")[-2:].join("/").append("/")
     blobs = bucket.list_blobs(prefix=prefix)
 
     for blob in blobs:
         relative_path = blob.name[len(prefix):]
-        local_path = root / relative_path
+        local_path = dataset_dir / relative_path
         parent_dir_name = Path(relative_path).parent.name
 
         if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
@@ -41,19 +43,19 @@ def pull_dataset_from_gcs(bucket_name: str, repo_id: str, force_overwrite: bool 
         blob.download_to_filename(local_path)
         logging.info(f"Downloaded {blob.name} to {local_path}")
 
-def push_dataset_to_gcs(bucket_name: str, repo_id: str, force_overwrite: bool = False) -> None:
+
+def push_dataset_to_gcs(bucket_name: str, home_path: str, repo_id: str, force_overwrite: bool = False) -> None:
     """
     Uploads the entire dataset directory from the local cache to the specified GCS bucket.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-    root = HF_LEROBOT_HOME / repo_id
 
-    for local_path in root.rglob("*"):
+    for local_path in home_path.rglob("*"):
         if local_path.is_dir():
             continue
 
-        relative_path = local_path.relative_to(root).as_posix()
+        relative_path = local_path.relative_to(home_path).as_posix()
         blob_name = f"{repo_id}/{relative_path}"
         blob = bucket.blob(blob_name)
         parent_dir_name = Path(relative_path).parent.name
@@ -63,6 +65,7 @@ def push_dataset_to_gcs(bucket_name: str, repo_id: str, force_overwrite: bool = 
         
         blob.upload_from_filename(local_path)
         logging.info(f"Uploaded {blob_name} to {bucket_name}")
+
 
 def pull_model_from_gcs(bucket_name: str, model_name: str, force_overwrite: bool = False) -> None:
     """
@@ -85,28 +88,33 @@ def pull_model_from_gcs(bucket_name: str, model_name: str, force_overwrite: bool
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
         blob.download_to_filename(local_path)
-        logging.info(f"Downloaded gs://{bucket_name}/{blob.name} to {local_path}")
+        logging.info(f"Downloaded {blob.name} to {local_path}")
 
-def push_model_to_gcs(bucket_name: str, model_name: str, force_overwrite: bool = False) -> None:
+    return MODEL_OUTPUT_DIR / model_name
+
+    
+def push_model_to_gcs(bucket_name: str, model_root: str, force_overwrite: bool = False) -> None:
     """
     Uploads the model from the local cache to the specified GCS bucket.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-    root = MODEL_OUTPUT_DIR / model_name
 
-    for local_path in root.rglob("*"):
+    model_root = Path(model_root)
+    output_dir= model_root.as_posix().split("/")[:-2].join("/")
+
+    for local_path in model_root.rglob("*"):
         if local_path.is_dir():
             continue
 
-        relative_path = local_path.relative_to(root).as_posix()
-        blob = bucket.blob(f"{model_name}/{relative_path}")
+        blob_name = local_path.relative_to(output_dir).as_posix()
+        blob = bucket.blob(blob_name)
 
         if not force_overwrite and blob.exists():
             continue
 
         blob.upload_from_filename(local_path)
-        logging.info(f"Uploaded {local_path} to gs://{bucket_name}/{model_name}/{relative_path}")
+        logging.info(f"Uploaded {blob_name} to {bucket_name}")
 
 if __name__ == "__main__":
     args = parse_args()

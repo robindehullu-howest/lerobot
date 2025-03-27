@@ -77,9 +77,13 @@ class TrainPipelineConfig(HubMixin):
         policy_path = parser.get_path_arg("policy")
         if policy_path:
             if policy_path.startswith("gs://"):
-                bucket_name = policy_path.split("/")[2]
-                policy_name = policy_path.split("/", 3)[-1]
-                policy_path = self.pull_from_bucket(bucket_name, policy_name)
+                from lerobot.common.datasets.gcs_utils import pull_model_from_gcs
+
+                split_path = policy_path.split("/")
+                bucket_name = split_path[2]
+                policy_name = split_path[3:].join("/")
+                
+                policy_path = pull_model_from_gcs(bucket_name, policy_name)
 
             # Only load the policy config
             cli_overrides = parser.get_cli_overrides("policy")
@@ -125,19 +129,6 @@ class TrainPipelineConfig(HubMixin):
         elif self.use_policy_training_preset and not self.resume:
             self.optimizer = self.policy.get_optimizer_preset()
             self.scheduler = self.policy.get_scheduler_preset()
-
-    def pull_from_bucket(self, bucket_name: str, policy_name: str):
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blobs = bucket.list_blobs(prefix=policy_name)
-        
-        for blob in blobs:
-            relative_path = Path(blob.name)
-            local_path = "output" / "train" / relative_path
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(local_path)
-
-        return "output" / "train" / policy_name
 
     @classmethod
     def __get_path_fields__(cls) -> list[str]:

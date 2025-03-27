@@ -106,7 +106,8 @@ class LeRobotDatasetMetadata:
 
             # Handle GCS paths
             if bucket_name is not None:
-                self.pull_from_gcs(bucket_name)
+                from lerobot.common.datasets.gcs_utils import pull_dataset_from_gcs
+                pull_dataset_from_gcs(bucket_name, self.root)
 
             self.load_metadata()
         except (FileNotFoundError, NotADirectoryError):
@@ -142,23 +143,6 @@ class LeRobotDatasetMetadata:
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
-
-    def pull_from_gcs(self, bucket_name: str) -> None:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(bucket_name)
-
-        prefix = f"{self.repo_id}/meta/"
-        blobs = bucket.list_blobs(prefix=prefix)
-
-        local_meta_dir = self.root / "meta"
-        local_meta_dir.mkdir(exist_ok=True, parents=True)
-
-        for blob in blobs:
-            relative_path = blob.name[len(f"{self.repo_id}/"):]
-            local_path = self.root / relative_path
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(local_path)
-            logging.info(f"Downloaded gs://{bucket_name}/{blob.name} to {local_path}")
 
     @property
     def _version(self) -> packaging.version.Version:
@@ -535,7 +519,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # Load actual data
         try:
             if bucket_name is not None:
-                self.pull_from_gcs(bucket_name)
+                from lerobot.common.datasets.gcs_utils import pull_dataset_from_gcs
+                pull_dataset_from_gcs(bucket_name, self.root, force_overwrite=force_cache_sync)
 
             if force_cache_sync:
                 raise FileNotFoundError
@@ -616,34 +601,6 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 hub_api.delete_tag(self.repo_id, tag=CODEBASE_VERSION, repo_type="dataset")
             hub_api.create_tag(self.repo_id, tag=CODEBASE_VERSION, revision=branch, repo_type="dataset")
 
-    def push_to_gcs(
-        self,
-        bucket_name: str,
-    ) -> None:
-        """
-        Uploads the dataset directory to the specified GCS bucket.
-        
-        Args:
-            bucket_name: Name of the GCS bucket to upload the dataset to.
-        """
-        client = storage.Client()
-        bucket = client.get_bucket(bucket_name)
-
-        for local_file in self.root.rglob("*"):
-            if not local_file.is_file():
-                continue
-
-            relative_path = local_file.relative_to(self.root).as_posix()
-            blob_name = f"{self.repo_id}/{relative_path}"
-            blob = bucket.blob(blob_name)
-
-            parent_dir_name = Path(relative_path).parent.name
-            if blob.exists() and parent_dir_name != "meta":
-                continue
-            
-            blob.upload_from_filename(str(local_file))
-            logging.info(f"Uploaded {blob_name} to {bucket_name}")
-
     def pull_from_repo(
         self,
         allow_patterns: list[str] | str | None = None,
@@ -657,24 +614,6 @@ class LeRobotDataset(torch.utils.data.Dataset):
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
-
-    def pull_from_gcs(self, bucket_name) -> None:
-        """
-        Downloads the entire dataset directory from the specified GCS bucket to the local cache.
-        """
-        client = storage.Client()
-        bucket = client.get_bucket(bucket_name)
-
-        prefix = f"{self.repo_id}/"
-        blobs = bucket.list_blobs(prefix=prefix)
-
-        for blob in blobs:
-            relative_path = blob.name[len(prefix):]
-            local_path = self.root / relative_path
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(local_path)
-            logging.info(f"Downloaded gs://{bucket_name}/{blob.name} to {local_path}")
-
 
     def download_episodes(self, download_videos: bool = True) -> None:
         """Downloads the dataset from the given 'repo_id' at the provided version. If 'episodes' is given, this
