@@ -44,21 +44,23 @@ def pull_dataset_from_gcs(bucket_name: str, dataset_dir: str, force_overwrite: b
         logging.info(f"Downloaded {blob.name} to {local_path}")
 
 
-def push_dataset_to_gcs(bucket_name: str, home_path: str, repo_id: str, force_overwrite: bool = False) -> None:
+def push_dataset_to_gcs(bucket_name: str, dataset_dir: str, force_overwrite: bool = False) -> None:
     """
     Uploads the entire dataset directory from the local cache to the specified GCS bucket.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
-    for local_path in home_path.rglob("*"):
+    dataset_dir = Path(dataset_dir)
+    dataset_home_dir = dataset_dir.as_posix().split("/")[-2]
+
+    for local_path in dataset_dir.rglob("*"):
         if local_path.is_dir():
             continue
 
-        relative_path = local_path.relative_to(home_path).as_posix()
-        blob_name = f"{repo_id}/{relative_path}"
+        blob_name = local_path.relative_to(dataset_home_dir).as_posix()
         blob = bucket.blob(blob_name)
-        parent_dir_name = Path(relative_path).parent.name
+        parent_dir_name = local_path.parent.name
 
         if not force_overwrite and blob.exists() and parent_dir_name != "meta":
             continue
@@ -93,21 +95,21 @@ def pull_model_from_gcs(bucket_name: str, model_name: str, force_overwrite: bool
     return MODEL_OUTPUT_DIR / model_name
 
     
-def push_model_to_gcs(bucket_name: str, model_root: str, force_overwrite: bool = False) -> None:
+def push_model_to_gcs(bucket_name: str, model_dir: str, force_overwrite: bool = False) -> None:
     """
     Uploads the model from the local cache to the specified GCS bucket.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
-    model_root = Path(model_root)
-    output_dir= model_root.as_posix().split("/")[:-2].join("/")
+    model_dir = Path(model_dir)
+    model_home_dir= model_dir.as_posix().split("/")[:-2].join("/")
 
-    for local_path in model_root.rglob("*"):
+    for local_path in model_dir.rglob("*"):
         if local_path.is_dir():
             continue
 
-        blob_name = local_path.relative_to(output_dir).as_posix()
+        blob_name = local_path.relative_to(model_home_dir).as_posix()
         blob = bucket.blob(blob_name)
 
         if not force_overwrite and blob.exists():
@@ -115,6 +117,7 @@ def push_model_to_gcs(bucket_name: str, model_root: str, force_overwrite: bool =
 
         blob.upload_from_filename(local_path)
         logging.info(f"Uploaded {blob_name} to {bucket_name}")
+
 
 if __name__ == "__main__":
     args = parse_args()

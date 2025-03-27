@@ -333,8 +333,8 @@ def record(
     if cfg.push_to_hub:
             dataset.push_to_hub(tags=cfg.tags, private=cfg.private)
     if cfg.gcs_bucket_name is not None:
-        from lerobot.common.datasets.gcs_utils import push_model_to_gcs
-        push_model_to_gcs(cfg.gcs_bucket_name, dataset.root, force_overwrite=True)
+        from lerobot.common.datasets.gcs_utils import push_dataset_to_gcs
+        push_dataset_to_gcs(cfg.gcs_bucket_name, dataset.root)
 
     log_say("Exiting", cfg.play_sounds)
     return dataset
