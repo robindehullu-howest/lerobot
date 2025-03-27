@@ -21,6 +21,9 @@ wandb
 data
 outputs
 
+# Cache
+.cache
+
 # Apple
 .DS_Store
 
@@ -171,3 +174,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+lerobot/common/robot_devices/robots/configs.py
