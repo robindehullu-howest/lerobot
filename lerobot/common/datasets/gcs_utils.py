@@ -28,11 +28,11 @@ def pull_dataset_from_gcs(bucket_name: str, dataset_dir: str, force_overwrite: b
 
     dataset_dir = Path(dataset_dir)
     
-    prefix = '/'.join(dataset_dir.as_posix().split("/")[-2:]) + '/'
-    blobs = bucket.list_blobs(prefix=prefix)
+    repo_id = dataset_dir.relative_to(dataset_dir.parents[1]).as_posix() + '/'
+    blobs = bucket.list_blobs(prefix=repo_id)
 
     for blob in blobs:
-        relative_path = blob.name[len(prefix):]
+        relative_path = blob.name[len(repo_id):]
         local_path = dataset_dir / relative_path
         parent_dir_name = Path(relative_path).parent.name
 
@@ -48,17 +48,16 @@ def push_dataset_to_gcs(bucket_name: str, dataset_dir: str, force_overwrite: boo
     """
     Uploads the entire dataset directory from the local cache to the specified GCS bucket.
     """
+    dataset_dir = Path(dataset_dir)
+
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-
-    dataset_dir = Path(dataset_dir)
-    dataset_home_dir = dataset_dir.as_posix().split("/")[-2]
 
     for local_path in dataset_dir.rglob("*"):
         if local_path.is_dir():
             continue
 
-        blob_name = local_path.relative_to(dataset_home_dir).as_posix()
+        blob_name = local_path.relative_to(dataset_dir.parents[1]).as_posix()
         blob = bucket.blob(blob_name)
         parent_dir_name = local_path.parent.name
 
@@ -99,17 +98,16 @@ def push_model_to_gcs(bucket_name: str, model_dir: str, force_overwrite: bool = 
     """
     Uploads the model from the local cache to the specified GCS bucket.
     """
+    model_dir = Path(model_dir)
+
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-
-    model_dir = Path(model_dir)
-    model_home_dir = '/'.join(model_dir.as_posix().split('/')[:-2])
 
     for local_path in model_dir.rglob("*"):
         if local_path.is_dir():
             continue
 
-        blob_name = local_path.relative_to(model_home_dir).as_posix()
+        blob_name = local_path.relative_to(model_dir.parents[1]).as_posix()
         blob = bucket.blob(blob_name)
 
         if not force_overwrite and blob.exists():
