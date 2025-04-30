@@ -77,13 +77,13 @@ class TrainPipelineConfig(HubMixin):
         policy_path = parser.get_path_arg("policy")
         if policy_path:
             if policy_path.startswith("gs://"):
-                from lerobot.common.datasets.gcs_utils import pull_model_from_gcs
+                from lerobot.common.datasets.gcs_utils import pull_models_from_gcs
 
                 split_path = policy_path.split("/")
                 bucket_name = split_path[2]
                 policy_name = split_path[3:].join("/")
                 
-                policy_path = pull_model_from_gcs(bucket_name, policy_name)
+                policy_path = pull_models_from_gcs(bucket_name, policy_name)
 
             # Only load the policy config
             cli_overrides = parser.get_cli_overrides("policy")

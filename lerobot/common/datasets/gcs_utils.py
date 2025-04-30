@@ -3,6 +3,7 @@ import logging
 import argparse
 from pathlib import Path
 from google.cloud import storage
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 
@@ -11,103 +12,106 @@ def parse_args():
     parser.add_argument("--bucket_name", type=str, required=True, help="Name of the GCS bucket.")
     parser.add_argument("--action", type=str, choices=["pull", "push"], required=True, help="Action to perform: 'pull' or 'push'.")
     parser.add_argument("--content_type", type=str, choices=["dataset", "model"], required=True, help="Type of content to pull or push: 'dataset' or 'model'.")
-    parser.add_argument("--identifier", type=str, required=True, help="Repository ID to pull or push.")
+    parser.add_argument("--identifiers", type=str, required=True, help="Repository IDs delimited by a comma to pull or push.")
     parser.add_argument("--base_dir", type=str, help="Base directory for the dataset or model.")
     parser.add_argument("--force_overwrite", action="store_true", help="Overwrite existing files.")
     return parser.parse_args()
 
 
-def pull_dataset_from_gcs(bucket_name: str, base_dir: str, dataset_id: str, force_overwrite: bool = False) -> Path:
+def pull_datasets_from_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Downloads the entire dataset directory from the specified GCS bucket to the local cache.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-    blobs = bucket.list_blobs(prefix=dataset_id)
 
-    for blob in blobs:
-        local_path = Path(base_dir, blob.name)
-        parent_dir_name = local_path.parent.name
+    for dataset_id in dataset_ids:
+        logging.info(f"Pulling dataset {dataset_id}.")
+        blobs = bucket.list_blobs(prefix=dataset_id)
 
-        if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
-            continue
+        for blob in blobs:
+            local_path = Path(base_dir, blob.name)
+            parent_dir_name = local_path.parent.name
 
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        blob.download_to_filename(local_path)
-        logging.info(f"Downloaded {blob.name} to {local_path}")
+            if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
+                continue
 
-    return Path(base_dir, dataset_id)
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(local_path)
+            logging.info(f"Downloaded {blob.name} to {local_path}")
 
 
-def push_dataset_to_gcs(bucket_name: str, base_dir: str, dataset_id: str, force_overwrite: bool = False) -> None:
+def push_datasets_to_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Uploads the entire dataset directory from the local cache to the specified GCS bucket.
     """
-    dataset_dir = Path(base_dir, dataset_id)
-
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
-    for local_path in dataset_dir.rglob("*"):
-        if local_path.is_dir():
-            continue
+    for dataset_id in dataset_ids:
+        dataset_dir = Path(base_dir, dataset_id)
 
-        blob_name = local_path.relative_to(base_dir).as_posix()
-        blob = bucket.blob(blob_name)
-        parent_dir_name = local_path.parent.name
+        for local_path in dataset_dir.rglob("*"):
+            if local_path.is_dir():
+                continue
 
-        if not force_overwrite and blob.exists() and parent_dir_name != "meta":
-            continue
-        
-        blob.upload_from_filename(local_path)
-        logging.info(f"Uploaded {blob_name} to {bucket_name}")
+            blob_name = local_path.relative_to(base_dir).as_posix()
+            blob = bucket.blob(blob_name)
+            parent_dir_name = local_path.parent.name
+
+            if not force_overwrite and blob.exists() and parent_dir_name != "meta":
+                continue
+            
+            blob.upload_from_filename(local_path)
+            logging.info(f"Uploaded {blob_name} to {bucket_name}")
 
 
-def pull_model_from_gcs(bucket_name: str, base_dir: str, model_id: str, force_overwrite: bool = False) -> Path:
+def pull_models_from_gcs(bucket_name: str, base_dir: str, model_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Downloads the model from the specified GCS bucket to the local cache.
     """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
-    blobs = bucket.list_blobs(prefix=model_id)
-    
-    for blob in blobs:
-        if blob.name.endswith('/'):
-            continue
+
+    for model_id in model_ids:
+        blobs = bucket.list_blobs(prefix=model_id)
         
-        local_path = Path(base_dir, blob.name)
+        for blob in blobs:
+            if blob.name.endswith('/'):
+                continue
+            
+            local_path = Path(base_dir, blob.name)
 
-        if not force_overwrite and local_path.exists():
-            continue
+            if not force_overwrite and local_path.exists():
+                continue
 
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        blob.download_to_filename(local_path)
-        logging.info(f"Downloaded {blob.name} to {local_path}")
-
-    return Path(base_dir, model_id)
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(local_path)
+            logging.info(f"Downloaded {blob.name} to {local_path}")
 
     
-def push_model_to_gcs(bucket_name: str, base_dir: str, model_id: str, force_overwrite: bool = False) -> None:
+def push_models_to_gcs(bucket_name: str, base_dir: str, model_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Uploads the model from the local cache to the specified GCS bucket.
     """
-    model_dir = Path(base_dir, model_id)
-
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
-    for local_path in model_dir.rglob("*"):
-        if local_path.is_dir():
-            continue
+    for model_id in model_ids:
+        model_dir = Path(base_dir, model_id)
 
-        blob_name = local_path.relative_to(base_dir).as_posix()
-        blob = bucket.blob(blob_name)
+        for local_path in model_dir.rglob("*"):
+            if local_path.is_dir():
+                continue
 
-        if not force_overwrite and blob.exists():
-            continue
+            blob_name = local_path.relative_to(base_dir).as_posix()
+            blob = bucket.blob(blob_name)
 
-        blob.upload_from_filename(local_path)
-        logging.info(f"Uploaded {blob_name} to {bucket_name}")
+            if not force_overwrite and blob.exists():
+                continue
+
+            blob.upload_from_filename(local_path)
+            logging.info(f"Uploaded {blob_name} to {bucket_name}")
 
 
 if __name__ == "__main__":
@@ -116,7 +120,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     bucket_name = args.bucket_name
-    identifier = args.identifier
+    identifiers = args.identifiers.split(",")
     action = args.action
     force_overwrite = args.force_overwrite
     base_dir = args.base_dir
@@ -126,11 +130,11 @@ if __name__ == "__main__":
 
     if args.content_type == "dataset":
         if action == "pull":
-            pull_dataset_from_gcs(bucket_name, base_dir, identifier, force_overwrite)
+            pull_datasets_from_gcs(bucket_name, base_dir, identifiers, force_overwrite)
         elif action == "push":
-            push_dataset_to_gcs(bucket_name, base_dir, identifier, force_overwrite)
+            push_datasets_to_gcs(bucket_name, base_dir, identifiers, force_overwrite)
     elif args.content_type == "model":
         if action == "pull":
-            pull_model_from_gcs(bucket_name, base_dir, identifier, force_overwrite)
+            pull_models_from_gcs(bucket_name, base_dir, identifiers, force_overwrite)
         elif action == "push":
-            push_model_to_gcs(bucket_name, base_dir, identifier, force_overwrite)
+            push_models_to_gcs(bucket_name, base_dir, identifiers, force_overwrite)

@@ -246,8 +246,8 @@ def train(cfg: TrainPipelineConfig):
             save_checkpoint(checkpoint_dir, step, cfg, policy, optimizer, lr_scheduler)
 
             if cfg.gcs_bucket is not None:
-                from lerobot.common.datasets.gcs_utils import push_model_to_gcs
-                push_model_to_gcs(cfg.gcs_bucket, cfg.output_dir)
+                from lerobot.common.datasets.gcs_utils import push_models_to_gcs
+                push_models_to_gcs(cfg.gcs_bucket, cfg.output_dir)
 
             update_last_checkpoint(checkpoint_dir)
             if wandb_logger:

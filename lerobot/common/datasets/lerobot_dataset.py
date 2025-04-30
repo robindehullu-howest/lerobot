@@ -106,8 +106,8 @@ class LeRobotDatasetMetadata:
 
             # Handle GCS paths
             if bucket_name is not None:
-                from lerobot.common.datasets.gcs_utils import pull_dataset_from_gcs
-                pull_dataset_from_gcs(bucket_name, self.root)
+                from lerobot.common.datasets.gcs_utils import pull_datasets_from_gcs
+                pull_datasets_from_gcs(bucket_name, self.root)
 
             self.load_metadata()
         except (FileNotFoundError, NotADirectoryError):
@@ -519,8 +519,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # Load actual data
         try:
             if bucket_name is not None:
-                from lerobot.common.datasets.gcs_utils import pull_dataset_from_gcs
-                pull_dataset_from_gcs(bucket_name, self.root, force_overwrite=force_cache_sync)
+                from lerobot.common.datasets.gcs_utils import pull_datasets_from_gcs
+                pull_datasets_from_gcs(bucket_name, self.root, force_overwrite=force_cache_sync)
 
             if force_cache_sync:
                 raise FileNotFoundError
