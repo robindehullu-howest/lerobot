@@ -43,6 +43,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+
 def load_metadata(repo_dir: Path) -> Optional[Dict[str, Any]]:
     """Load metadata from a repository's info.json file."""
     info_path = Path(repo_dir, META_DIR, INFO_FILE)
@@ -52,6 +53,7 @@ def load_metadata(repo_dir: Path) -> Optional[Dict[str, Any]]:
 
     with open(info_path, "r") as f:
         return json.load(f)
+
 
 def merge_info_files(repo_ids: List[str], base_dir: str) -> Optional[Dict[str, Any]]:
     """Merge info.json files from multiple repositories."""
@@ -77,6 +79,7 @@ def merge_info_files(repo_ids: List[str], base_dir: str) -> Optional[Dict[str, A
             
     return combined_info
 
+
 def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) -> bool:
     """Copy the first valid tasks.jsonl file from the repositories."""
 
@@ -93,6 +96,7 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
     logging.warning("No valid tasks.jsonl file found.")
     return False
 
+
 def save_combined_info_file(combined_info: Dict[str, Any], combined_meta_dir: str) -> None:
     """Save the combined metadata to the specified repository."""
     combined_info_path = os.path.join(combined_meta_dir, INFO_FILE)
@@ -101,6 +105,7 @@ def save_combined_info_file(combined_info: Dict[str, Any], combined_meta_dir: st
         json.dump(combined_info, f, indent=4)
 
     logging.info(f"Combined info.json saved to {combined_info_path}.")
+
 
 def copy_episodes_files(repo_ids: List[str], combined_meta_dir: str, episodes_file: str, base_dir: str) -> None:
     """Combine episodes.jsonl files from multiple repositories into one with reindexed episode_index."""
@@ -126,6 +131,7 @@ def copy_episodes_files(repo_ids: List[str], combined_meta_dir: str, episodes_fi
 
     logging.info(f"Combined episodes.jsonl saved to {combined_episodes_path}.")
 
+
 def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
     """Copy and combine metadata files from multiple repositories."""
 
@@ -148,6 +154,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
     # Copy and combine episodes.jsonl and episodes_stats.jsonl files
     copy_episodes_files(repo_ids, combined_meta_dir, EPISODES_FILE, base_dir)
     copy_episodes_files(repo_ids, combined_meta_dir, EPISODES_STATS_FILE, base_dir)
+
 
 def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
     """Copy and combine parquet files to the combined repository with updated indices."""
@@ -183,10 +190,12 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
 
             logging.info(f"Processed and copied {src_path} to {dst_path}.")
 
+
 def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> None:
     """Copy video files to the combined repository with sequential filenames, accounting for subdirectories."""
     
     combined_video_dir = Path(base_dir, combined_repo_id, VIDEO_DIR, "chunk-000")
+    logging.warning(f"Combined video directory: {combined_video_dir}")
 
     if combined_video_dir.exists():
         shutil.rmtree(combined_video_dir)
@@ -200,24 +209,23 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> Non
             logging.warning(f"Video directory {video_dir} does not exist. Skipping.")
             continue
 
-        for subdir in sorted(video_dir.iterdir()):
-            subdir_path = Path(video_dir, subdir)
-
+        for subdir_path in sorted(video_dir.iterdir()):
+            subdir = subdir_path.name
             combined_subdir_path = Path(combined_video_dir, subdir)
             combined_subdir_path.mkdir(exist_ok=True)
+            logging.warning(f"Created directory {combined_subdir_path}.")
 
             if subdir not in subdir_indices:
                 subdir_indices[subdir] = 0
 
-            for video_file in sorted(os.listdir(subdir_path)):
-                src_path = Path(subdir_path, video_file)
-
+            for src_path in sorted(subdir_path.iterdir()):
                 new_filename = f"episode_{subdir_indices[subdir]:06d}.mp4"
                 dst_path = Path(combined_subdir_path, new_filename)
 
                 shutil.copy(src_path, dst_path)
                 logging.info(f"Copied {src_path} to {dst_path}.")
                 subdir_indices[subdir] += 1
+                
 
 def symlink_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
     """Create symbolic links to video files in the combined repository with sequential filenames, accounting for subdirectories."""
@@ -254,6 +262,7 @@ def symlink_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str) ->
                 os.symlink(src_path, dst_path)
                 logging.info(f"Created symlink from {src_path} to {dst_path}.")
                 subdir_indices[subdir] += 1
+
 
 def main() -> None:
     """Main function to combine datasets."""
