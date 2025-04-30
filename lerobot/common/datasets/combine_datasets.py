@@ -193,9 +193,8 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
 
 def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> None:
     """Copy video files to the combined repository with sequential filenames, accounting for subdirectories."""
-    
+
     combined_video_dir = Path(base_dir, combined_repo_id, VIDEO_DIR, "chunk-000")
-    logging.warning(f"Combined video directory: {combined_video_dir}")
 
     if combined_video_dir.exists():
         shutil.rmtree(combined_video_dir)
@@ -206,14 +205,12 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> Non
     for repo_id in repo_ids:
         video_dir = Path(base_dir, repo_id, VIDEO_DIR, "chunk-000")
         if not video_dir.exists():
-            logging.warning(f"Video directory {video_dir} does not exist. Skipping.")
             continue
 
         for subdir_path in sorted(video_dir.iterdir()):
             subdir = subdir_path.name
             combined_subdir_path = Path(combined_video_dir, subdir)
             combined_subdir_path.mkdir(exist_ok=True)
-            logging.warning(f"Created directory {combined_subdir_path}.")
 
             if subdir not in subdir_indices:
                 subdir_indices[subdir] = 0
