@@ -86,7 +86,7 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
     for repo_id in repo_ids:
         tasks_path = Path(base_dir, repo_id, META_DIR, TASKS_FILE)
 
-        if os.path.exists(tasks_path):
+        if tasks_path.exists():
             combined_tasks_path = Path(combined_meta_dir, TASKS_FILE)
             with open(tasks_path, "r") as src, open(combined_tasks_path, "w") as dst:
                 dst.write(src.read())
@@ -94,6 +94,21 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
             return True
         
     logging.warning("No valid tasks.jsonl file found.")
+    return False
+
+def copy_modality_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) -> bool:
+    """Copy the first valid modality.jsonl file from the repositories."""
+
+    for repo_id in repo_ids:
+        modality_path = Path(base_dir, repo_id, META_DIR, "modality.jsonl")
+
+        if modality_path.exists():
+            combined_modality_path = Path(combined_meta_dir, "modality.jsonl")
+            with open(modality_path, "r") as src, open(combined_modality_path, "w") as dst:
+                dst.write(src.read())
+            logging.info(f"Copied {modality_path} to {combined_modality_path}.")
+            return True
+        
     return False
 
 
@@ -137,7 +152,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
 
     # Create combined repository meta directory
     combined_meta_dir = Path(base_dir, combined_repo_id, META_DIR)
-    os.makedirs(combined_meta_dir, exist_ok=True)
+    combined_meta_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy and combine info.json files
     combined_info = merge_info_files(repo_ids, base_dir)
@@ -150,6 +165,11 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
     tasks_copied = copy_tasks_file(repo_ids, base_dir, combined_meta_dir)
     if not tasks_copied:
         logging.warning("No tasks.jsonl file was copied.")
+
+    # Copy modality.jsonl file
+    modality_copied = copy_modality_file(repo_ids, base_dir, combined_meta_dir)
+    if not modality_copied:
+        logging.warning("No modality.jsonl file was copied.")
 
     # Copy and combine episodes.jsonl and episodes_stats.jsonl files
     copy_episodes_files(repo_ids, combined_meta_dir, EPISODES_FILE, base_dir)
