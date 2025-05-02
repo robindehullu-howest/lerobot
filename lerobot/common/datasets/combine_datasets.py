@@ -11,6 +11,7 @@ from typing import List, Optional, Dict, Any
 META_DIR = "meta"
 INFO_FILE = "info.json"
 TASKS_FILE = "tasks.jsonl"
+MODALITY_FILE = "modality.json"
 EPISODES_FILE = "episodes.jsonl"
 EPISODES_STATS_FILE = "episodes_stats.jsonl"
 DATA_DIR = "data"
@@ -88,8 +89,7 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
 
         if tasks_path.exists():
             combined_tasks_path = Path(combined_meta_dir, TASKS_FILE)
-            with open(tasks_path, "r") as src, open(combined_tasks_path, "w") as dst:
-                dst.write(src.read())
+            shutil.copy(tasks_path, combined_tasks_path)
             logging.info(f"Copied {tasks_path} to {combined_tasks_path}.")
             return True
         
@@ -97,15 +97,14 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
     return False
 
 def copy_modality_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) -> bool:
-    """Copy the first valid modality.jsonl file from the repositories."""
+    """Copy the first valid modality.json file from the repositories."""
 
     for repo_id in repo_ids:
-        modality_path = Path(base_dir, repo_id, META_DIR, "modality.jsonl")
+        modality_path = Path(base_dir, repo_id, META_DIR, MODALITY_FILE)
 
         if modality_path.exists():
-            combined_modality_path = Path(combined_meta_dir, "modality.jsonl")
-            with open(modality_path, "r") as src, open(combined_modality_path, "w") as dst:
-                dst.write(src.read())
+            combined_modality_path = Path(combined_meta_dir, MODALITY_FILE)
+            shutil.copy(modality_path, combined_modality_path)
             logging.info(f"Copied {modality_path} to {combined_modality_path}.")
             return True
         
@@ -169,7 +168,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
     # Copy modality.jsonl file
     modality_copied = copy_modality_file(repo_ids, base_dir, combined_meta_dir)
     if not modality_copied:
-        logging.warning("No modality.jsonl file was copied.")
+        logging.warning("No modality.json file was copied.")
 
     # Copy and combine episodes.jsonl and episodes_stats.jsonl files
     copy_episodes_files(repo_ids, combined_meta_dir, EPISODES_FILE, base_dir)
@@ -202,7 +201,7 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
             df["index"] = range(current_frame_index, current_frame_index + len(df))
 
             new_filename = f"episode_{current_episode_index:06d}.parquet"
-            dst_path = os.path.join(combined_data_dir, new_filename)
+            dst_path = Path(combined_data_dir, new_filename)
             df.to_parquet(dst_path, index=False)
 
             current_episode_index += 1
