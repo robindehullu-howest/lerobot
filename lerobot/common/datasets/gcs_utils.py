@@ -57,9 +57,14 @@ def push_datasets_to_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str]
 
             blob_name = local_path.relative_to(base_dir).as_posix()
             blob = bucket.blob(blob_name)
-            parent_dir_name = local_path.parent.name
 
-            if not force_overwrite and blob.exists() and parent_dir_name != "meta":
+            # Check if the blob already exists and if we should overwrite it
+            # Always overwrite meta files
+            if not force_overwrite and blob.exists() and local_path.parent.name != "meta":
+                continue
+
+            # Skip stats.json files (auto-generated)
+            if local_path.name == "stats.json":
                 continue
             
             blob.upload_from_filename(local_path)
