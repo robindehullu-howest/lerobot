@@ -38,6 +38,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Base directory for the dataset."
     )
     parser.add_argument(
+        "--excluded_video_keys",
+        default="",
+        help="Comma-separated list of video keys to exclude from the combined dataset."
+    )
+    parser.add_argument(
         "--use_symlinks",
         action="store_true",
         help="Flag to indicate whether to use symlinks for data and videos."
@@ -45,35 +50,56 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_metadata(repo_dir: Path) -> Optional[Dict[str, Any]]:
+def load_metadata(path: Path) -> Optional[Dict[str, Any]]:
     """Load metadata from a repository's info.json file."""
-    info_path = Path(repo_dir, META_DIR, INFO_FILE)
-    if not os.path.exists(info_path):
-        logging.warning(f"Metadata file {info_path} does not exist. Skipping.")
+    if not os.path.exists(path):
+        logging.warning(f"Metadata file {path} does not exist. Skipping.")
         return None
 
-    with open(info_path, "r") as f:
+    with open(path, "r") as f:
         return json.load(f)
 
 
-def merge_info_files(repo_ids: List[str], base_dir: str) -> Optional[Dict[str, Any]]:
+def merge_info_files(repo_ids: List[str], base_dir: str, excluded_video_keys: List[str]) -> Optional[Dict[str, Any]]:
     """Merge info.json files from multiple repositories."""
     combined_info = None
+    total_video_keys = 0
 
     for repo_id in repo_ids:
-        info_data = load_metadata(Path(base_dir, repo_id))
-        if not info_data:
+        info_path = Path(base_dir, repo_id, META_DIR, INFO_FILE)
+
+        if not info_path.exists():
+            logging.warning(f"Info file {info_path} does not exist. Skipping.")
             continue
+
+        info_data = load_metadata(Path(base_dir, repo_id, META_DIR, INFO_FILE))
+        if not info_data or "features" not in info_data:
+            continue
+
+        removed_video_keys = 0
+        total_video_keys = sum(
+            1 for key, value in info_data["features"].items() if value.get("dtype") == "video"
+        )
+
+        for key in excluded_video_keys:
+            if key in info_data["features"]:
+                del info_data["features"][key]
+                removed_video_keys += 1
+            else:
+                logging.warning(f"Video input {key} not found in {repo_id}. Skipping.")
 
         if combined_info is None:
             combined_info = info_data.copy()
+
             combined_info["total_episodes"] = 0
             combined_info["total_frames"] = 0
             combined_info["total_videos"] = 0
 
+        discount_rate = (total_video_keys - removed_video_keys) / total_video_keys
+
         combined_info["total_episodes"] += info_data.get("total_episodes", 0)
         combined_info["total_frames"] += info_data.get("total_frames", 0)
-        combined_info["total_videos"] += info_data.get("total_videos", 0)
+        combined_info["total_videos"] += int(info_data.get("total_videos", 0) * discount_rate)
 
         if "splits" in combined_info and "train" in combined_info["splits"]:
             combined_info["splits"]["train"] = f"0:{combined_info['total_episodes']}"
@@ -96,18 +122,37 @@ def copy_tasks_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) 
     logging.warning("No valid tasks.jsonl file found.")
     return False
 
-def copy_modality_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str) -> bool:
-    """Copy the first valid modality.json file from the repositories."""
+def copy_modality_file(repo_ids: List[str], base_dir: str, combined_meta_dir: str, excluded_video_keys: List[str]) -> bool:
+    """Copy the first valid modality.json file from the repositories, excluding specified video keys."""
 
     for repo_id in repo_ids:
         modality_path = Path(base_dir, repo_id, META_DIR, MODALITY_FILE)
 
-        if modality_path.exists():
-            combined_modality_path = Path(combined_meta_dir, MODALITY_FILE)
-            shutil.copy(modality_path, combined_modality_path)
-            logging.info(f"Copied {modality_path} to {combined_modality_path}.")
-            return True
-        
+        if not modality_path.exists():
+            logging.warning(f"Modality file {modality_path} does not exist. Skipping.")
+            continue
+
+        modality = load_metadata(modality_path)
+
+        logging.warning(f"Modality file: {modality}")
+
+        modality["video"] = {
+            key: value for key, value in modality["video"].items()
+            if value["original_key"] not in excluded_video_keys
+        }
+
+        for excluded_key in excluded_video_keys:
+            if not any(value["original_key"] == excluded_key for value in modality["video"].values()):
+                logging.warning(f"Key {excluded_key} not found in modality.json. Skipping.")
+            
+        combined_modality_path = Path(combined_meta_dir, MODALITY_FILE)
+        with open(combined_modality_path, "w") as f:
+            json.dump(modality, f, indent=4)
+
+        logging.info(f"Copied and filtered {modality_path} to {combined_modality_path}.")
+        return True
+
+    logging.warning("No valid modality.json file found.")
     return False
 
 
@@ -146,7 +191,7 @@ def copy_episodes_files(repo_ids: List[str], combined_meta_dir: str, episodes_fi
     logging.info(f"Combined episodes.jsonl saved to {combined_episodes_path}.")
 
 
-def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
+def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_video_keys: List[str]) -> None:
     """Copy and combine metadata files from multiple repositories."""
 
     # Create combined repository meta directory
@@ -154,7 +199,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
     combined_meta_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy and combine info.json files
-    combined_info = merge_info_files(repo_ids, base_dir)
+    combined_info = merge_info_files(repo_ids, base_dir, excluded_video_keys)
     if combined_info is None:
         logging.error("No valid info.json files found. Exiting.")
         exit(1)
@@ -166,7 +211,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> 
         logging.warning("No tasks.jsonl file was copied.")
 
     # Copy modality.jsonl file
-    modality_copied = copy_modality_file(repo_ids, base_dir, combined_meta_dir)
+    modality_copied = copy_modality_file(repo_ids, base_dir, combined_meta_dir, excluded_video_keys)
     if not modality_copied:
         logging.warning("No modality.json file was copied.")
 
@@ -210,7 +255,7 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
             logging.info(f"Processed and copied {src_path} to {dst_path}.")
 
 
-def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> None:
+def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_video_keys: List[str]) -> None:
     """Copy video files to the combined repository with sequential filenames, accounting for subdirectories."""
 
     combined_video_dir = Path(base_dir, combined_repo_id, VIDEO_DIR, "chunk-000")
@@ -228,6 +273,10 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir:str) -> Non
 
         for subdir_path in sorted(video_dir.iterdir()):
             subdir = subdir_path.name
+
+            if subdir in excluded_video_keys:
+                continue
+
             combined_subdir_path = Path(combined_video_dir, subdir)
             combined_subdir_path.mkdir(exist_ok=True)
 
@@ -286,15 +335,16 @@ def main() -> None:
     repo_ids = args.repo_ids.split(",")
     combined_repo_id = args.combined_repo_id
     base_dir = args.base_dir
+    excluded_video_keys = args.excluded_video_keys.split(",") if args.excluded_video_keys else []
 
     logging.info(f"Combining datasets from {repo_ids} into {combined_repo_id}.")
-    copy_metadata(repo_ids, combined_repo_id, base_dir)
+    copy_metadata(repo_ids, combined_repo_id, base_dir, excluded_video_keys)
     copy_data(repo_ids, combined_repo_id, base_dir)
 
     if args.use_symlinks:
         symlink_videos(repo_ids, combined_repo_id, base_dir)
     else:
-        copy_videos(repo_ids, combined_repo_id, base_dir)
+        copy_videos(repo_ids, combined_repo_id, base_dir, excluded_video_keys)
 
 
 if __name__ == "__main__":
