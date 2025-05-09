@@ -4,9 +4,11 @@ import os
 import json
 import shutil
 import jsonlines
+import subprocess
 import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Dict, Any
+from concurrent.futures import ThreadPoolExecutor
 
 META_DIR = "meta"
 INFO_FILE = "info.json"
@@ -16,6 +18,7 @@ EPISODES_FILE = "episodes.jsonl"
 EPISODES_STATS_FILE = "episodes_stats.jsonl"
 DATA_DIR = "data"
 VIDEO_DIR = "videos"
+SUPPORTED_ENCODERS = ["av1", "h264"]
 
 logging.basicConfig(level=logging.INFO)
 
@@ -39,8 +42,14 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--excluded_video_keys",
-        default="",
+        default=None,
         help="Comma-separated list of video keys to exclude from the combined dataset."
+    )
+    parser.add_argument(
+        "--video_encoder",
+        default=None,
+        choices=SUPPORTED_ENCODERS,
+        help=f"The video encoder to use for the combined dataset. Supported encoders: {', '.join(SUPPORTED_ENCODERS)}"
     )
     parser.add_argument(
         "--use_symlinks",
@@ -60,7 +69,7 @@ def load_metadata(path: Path) -> Optional[Dict[str, Any]]:
         return json.load(f)
 
 
-def merge_info_files(repo_ids: List[str], base_dir: str, excluded_video_keys: List[str]) -> Optional[Dict[str, Any]]:
+def merge_info_files(repo_ids: List[str], base_dir: str, excluded_video_keys: List[str], video_encoder: str) -> Optional[Dict[str, Any]]:
     """Merge info.json files from multiple repositories."""
     combined_info = None
     total_video_keys = 0
@@ -94,6 +103,13 @@ def merge_info_files(repo_ids: List[str], base_dir: str, excluded_video_keys: Li
             combined_info["total_episodes"] = 0
             combined_info["total_frames"] = 0
             combined_info["total_videos"] = 0
+
+            if video_encoder is not None:
+                for feature in combined_info["features"].values():
+                    if feature.get("dtype") != "video" or "info" not in feature:
+                        continue
+                    
+                    feature["info"]["video.codec"] = video_encoder
 
         discount_rate = (total_video_keys - removed_video_keys) / total_video_keys
 
@@ -134,17 +150,15 @@ def copy_modality_file(repo_ids: List[str], base_dir: str, combined_meta_dir: st
 
         modality = load_metadata(modality_path)
 
-        logging.warning(f"Modality file: {modality}")
+        for excluded_key in excluded_video_keys:
+            if not any(value["original_key"] == excluded_key for value in modality["video"].values()):
+                logging.warning(f"Key {excluded_key} not found in modality.json. Skipping.")
 
         modality["video"] = {
             key: value for key, value in modality["video"].items()
             if value["original_key"] not in excluded_video_keys
         }
-
-        for excluded_key in excluded_video_keys:
-            if not any(value["original_key"] == excluded_key for value in modality["video"].values()):
-                logging.warning(f"Key {excluded_key} not found in modality.json. Skipping.")
-            
+        
         combined_modality_path = Path(combined_meta_dir, MODALITY_FILE)
         with open(combined_modality_path, "w") as f:
             json.dump(modality, f, indent=4)
@@ -191,7 +205,7 @@ def copy_episodes_files(repo_ids: List[str], combined_meta_dir: str, episodes_fi
     logging.info(f"Combined episodes.jsonl saved to {combined_episodes_path}.")
 
 
-def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_video_keys: List[str]) -> None:
+def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_video_keys: List[str], video_encoder: str) -> None:
     """Copy and combine metadata files from multiple repositories."""
 
     # Create combined repository meta directory
@@ -199,7 +213,7 @@ def copy_metadata(repo_ids: List[str], combined_repo_id: str, base_dir: str, exc
     combined_meta_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy and combine info.json files
-    combined_info = merge_info_files(repo_ids, base_dir, excluded_video_keys)
+    combined_info = merge_info_files(repo_ids, base_dir, excluded_video_keys, video_encoder)
     if combined_info is None:
         logging.error("No valid info.json files found. Exiting.")
         exit(1)
@@ -239,7 +253,7 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
             continue
 
         for data_file in sorted(data_dir.iterdir()):
-            src_path = Path(data_dir, data_file)
+            src_path = Path(data_file)
 
             df = pd.read_parquet(src_path)
             df["episode_index"] = current_episode_index
@@ -254,8 +268,24 @@ def copy_data(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None
 
             logging.info(f"Processed and copied {src_path} to {dst_path}.")
 
+def process_video(src_path, dst_path, current_encoder, target_encoder):
+    """Process a single video file: re-encode or copy."""
+    try:
+        if target_encoder and current_encoder != target_encoder:
+            subprocess.run(
+                ["ffmpeg", "-i", str(src_path), "-c:v", target_encoder, "-preset", "slow", "-crf", "18", "-y", str(dst_path)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True
+            )
+            logging.info(f"Re-encoded {src_path} to {dst_path} with encoder {target_encoder}.")
+        else:
+            shutil.copy(src_path, dst_path)
+            logging.info(f"Copied {src_path} to {dst_path}.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error processing {src_path} to {dst_path}: {e}")
 
-def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_video_keys: List[str]) -> None:
+def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_cameras: List[str] = [], target_encoder: str = None) -> None:
     """Copy video files to the combined repository with sequential filenames, accounting for subdirectories."""
 
     combined_video_dir = Path(base_dir, combined_repo_id, VIDEO_DIR, "chunk-000")
@@ -264,32 +294,39 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, exclu
         shutil.rmtree(combined_video_dir)
     combined_video_dir.mkdir(parents=True)
 
-    subdir_indices = {}
+    camera_indices = {}
 
     for repo_id in repo_ids:
+        info_features = load_metadata(Path(base_dir, repo_id, META_DIR, INFO_FILE))["features"]
         video_dir = Path(base_dir, repo_id, VIDEO_DIR, "chunk-000")
         if not video_dir.exists():
             continue
 
-        for subdir_path in sorted(video_dir.iterdir()):
-            subdir = subdir_path.name
+        for camera_path in sorted(video_dir.iterdir()):
+            camera = camera_path.name
 
-            if subdir in excluded_video_keys:
+            if camera in excluded_cameras:
                 continue
 
-            combined_subdir_path = Path(combined_video_dir, subdir)
+            combined_subdir_path = Path(combined_video_dir, camera)
             combined_subdir_path.mkdir(exist_ok=True)
 
-            if subdir not in subdir_indices:
-                subdir_indices[subdir] = 0
+            if camera not in camera_indices:
+                camera_indices[camera] = 0
 
-            for src_path in sorted(subdir_path.iterdir()):
-                new_filename = f"episode_{subdir_indices[subdir]:06d}.mp4"
-                dst_path = Path(combined_subdir_path, new_filename)
+            current_encoder = info_features[camera]["info"]["video.codec"]
 
-                shutil.copy(src_path, dst_path)
-                logging.info(f"Copied {src_path} to {dst_path}.")
-                subdir_indices[subdir] += 1
+            with ThreadPoolExecutor() as executor:
+                futures = []
+                for src_path in sorted(camera_path.iterdir()):
+                    new_filename = f"episode_{camera_indices[camera]:06d}.mp4"
+                    dst_path = Path(combined_subdir_path, new_filename)
+
+                    futures.append(executor.submit(process_video, src_path, dst_path, current_encoder, target_encoder))
+                    camera_indices[camera] += 1
+
+                for future in futures:
+                    future.result()
                 
 
 def symlink_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
@@ -336,15 +373,16 @@ def main() -> None:
     combined_repo_id = args.combined_repo_id
     base_dir = args.base_dir
     excluded_video_keys = args.excluded_video_keys.split(",") if args.excluded_video_keys else []
+    video_encoder = args.video_encoder if args.video_encoder and args.video_encoder in SUPPORTED_ENCODERS else None
 
     logging.info(f"Combining datasets from {repo_ids} into {combined_repo_id}.")
-    copy_metadata(repo_ids, combined_repo_id, base_dir, excluded_video_keys)
+    copy_metadata(repo_ids, combined_repo_id, base_dir, excluded_video_keys, video_encoder)
     copy_data(repo_ids, combined_repo_id, base_dir)
 
     if args.use_symlinks:
         symlink_videos(repo_ids, combined_repo_id, base_dir)
     else:
-        copy_videos(repo_ids, combined_repo_id, base_dir, excluded_video_keys)
+        copy_videos(repo_ids, combined_repo_id, base_dir, excluded_video_keys, video_encoder)
 
 
 if __name__ == "__main__":
