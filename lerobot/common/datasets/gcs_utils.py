@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 from google.cloud import storage
 from typing import List
+from concurrent.futures import ThreadPoolExecutor, wait
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,6 +19,17 @@ def parse_args():
     return parser.parse_args()
 
 
+def download_blob(blob, local_path):
+    """Helper function to download a single blob."""
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    blob.download_to_filename(local_path)
+    logging.info(f"Downloaded {blob.name} to {local_path}")
+
+def upload_blob(local_path, blob):
+    blob.upload_from_filename(local_path)
+    logging.info(f"Uploaded {blob.name} to {bucket_name}")
+
+
 def pull_datasets_from_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Downloads the entire dataset directory from the specified GCS bucket to the local cache.
@@ -25,20 +37,23 @@ def pull_datasets_from_gcs(bucket_name: str, base_dir: str, dataset_ids: List[st
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
+
     for dataset_id in dataset_ids:
         logging.info(f"Pulling dataset {dataset_id}.")
         blobs = bucket.list_blobs(prefix=dataset_id)
 
-        for blob in blobs:
-            local_path = Path(base_dir, blob.name)
-            parent_dir_name = local_path.parent.name
+        futures = []
+        with ThreadPoolExecutor(max_workers=10) as executor:  # Adjust max_workers as needed
+            for blob in blobs:
+                local_path = Path(base_dir, blob.name)
+                parent_dir_name = local_path.parent.name
 
-            if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
-                continue
+                if not force_overwrite and local_path.exists() and parent_dir_name != "meta":
+                    continue
 
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(local_path)
-            logging.info(f"Downloaded {blob.name} to {local_path}")
+                futures.append(executor.submit(download_blob, blob, local_path))
+
+            wait(futures)
 
 
 def push_datasets_to_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str], force_overwrite: bool = False) -> None:
@@ -50,25 +65,27 @@ def push_datasets_to_gcs(bucket_name: str, base_dir: str, dataset_ids: List[str]
 
     for dataset_id in dataset_ids:
         dataset_dir = Path(base_dir, dataset_id)
+        futures = []
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for local_path in dataset_dir.rglob("*"):
+                if local_path.is_dir():
+                    continue
 
-        for local_path in dataset_dir.rglob("*"):
-            if local_path.is_dir():
-                continue
+                blob_name = local_path.relative_to(base_dir).as_posix()
+                blob = bucket.blob(blob_name)
 
-            blob_name = local_path.relative_to(base_dir).as_posix()
-            blob = bucket.blob(blob_name)
+                # Check if the blob already exists and if we should overwrite it
+                # Always overwrite meta files
+                if not force_overwrite and blob.exists() and local_path.parent.name != "meta":
+                    continue
 
-            # Check if the blob already exists and if we should overwrite it
-            # Always overwrite meta files
-            if not force_overwrite and blob.exists() and local_path.parent.name != "meta":
-                continue
+                # Skip stats.json files (auto-generated)
+                if local_path.name == "stats.json":
+                    continue
 
-            # Skip stats.json files (auto-generated)
-            if local_path.name == "stats.json":
-                continue
-            
-            blob.upload_from_filename(local_path)
-            logging.info(f"Uploaded {blob_name} to {bucket_name}")
+                futures.append(executor.submit(upload_blob, local_path, blob))
+            wait(futures)
 
 
 def pull_models_from_gcs(bucket_name: str, base_dir: str, model_ids: List[str], force_overwrite: bool = False) -> None:
@@ -80,22 +97,24 @@ def pull_models_from_gcs(bucket_name: str, base_dir: str, model_ids: List[str], 
 
     for model_id in model_ids:
         blobs = bucket.list_blobs(prefix=model_id)
-        
-        for blob in blobs:
-            if blob.name.endswith('/'):
-                continue
-            
-            local_path = Path(base_dir, blob.name)
 
-            if not force_overwrite and local_path.exists():
-                continue
+        futures = []
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for blob in blobs:
+                if blob.name.endswith(('/', '.pt', '.pth')):
+                    continue
 
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(local_path)
-            logging.info(f"Downloaded {blob.name} to {local_path}")
+                local_path = Path(base_dir, blob.name)
 
-    
-def push_models_to_gcs(bucket_name: str, base_dir: str, model_ids: List[str], force_overwrite: bool = False) -> None:
+                if not force_overwrite and local_path.exists():
+                    continue
+
+                futures.append(executor.submit(download_blob, blob, local_path))
+
+            wait(futures)
+
+
+def push_models_to_gcs(bucket_name: str, base_dir: Path | str, model_ids: List[str], force_overwrite: bool = False) -> None:
     """
     Uploads the model from the local cache to the specified GCS bucket.
     """
@@ -104,19 +123,21 @@ def push_models_to_gcs(bucket_name: str, base_dir: str, model_ids: List[str], fo
 
     for model_id in model_ids:
         model_dir = Path(base_dir, model_id)
+        futures = []
 
-        for local_path in model_dir.rglob("*"):
-            if local_path.is_dir():
-                continue
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for local_path in model_dir.rglob("*"):
+                if local_path.is_dir() or local_path.name.endswith(('.pt', '.pth')):
+                    continue
 
-            blob_name = local_path.relative_to(base_dir).as_posix()
-            blob = bucket.blob(blob_name)
+                blob_name = local_path.relative_to(base_dir).as_posix()
+                blob = bucket.blob(blob_name)
 
-            if not force_overwrite and blob.exists():
-                continue
+                if not force_overwrite and blob.exists():
+                    continue
 
-            blob.upload_from_filename(local_path)
-            logging.info(f"Uploaded {blob_name} to {bucket_name}")
+                futures.append(executor.submit(upload_blob, local_path, blob))
+            wait(futures)
 
 
 if __name__ == "__main__":
