@@ -19,6 +19,7 @@ import logging
 import shutil
 from pathlib import Path
 from typing import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import datasets
 import numpy as np
@@ -994,25 +995,68 @@ class LeRobotDataset(torch.utils.data.Dataset):
         for ep_idx in range(self.meta.total_episodes):
             self.encode_episode_videos(ep_idx)
 
+    # def encode_episode_videos(self, episode_index: int) -> dict:
+    #     """
+    #     Use ffmpeg to convert frames stored as png into mp4 videos.
+    #     Note: encode_video_frames is a blocking call. Making it asynchronous shouldn't speedup encoding,
+    #     since video encoding with ffmpeg is already using multithreading.
+    #     """
+    #     video_paths = {}
+    #     for key in self.meta.video_keys:
+    #         video_path = self.root / self.meta.get_video_file_path(episode_index, key)
+    #         video_paths[key] = str(video_path)
+    #         if video_path.is_file():
+    #             # Skip if video is already encoded. Could be the case when resuming data recording.
+    #             continue
+    #         img_dir = self._get_image_file_path(
+    #             episode_index=episode_index, image_key=key, frame_index=0
+    #         ).parent
+    #         encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+
+    #     return video_paths
+    
+
     def encode_episode_videos(self, episode_index: int) -> dict:
         """
-        Use ffmpeg to convert frames stored as png into mp4 videos.
-        Note: `encode_video_frames` is a blocking call. Making it asynchronous shouldn't speedup encoding,
-        since video encoding with ffmpeg is already using multithreading.
+        Use ffmpeg to convert frames stored as png into mp4 videos, in parallel.
+        `encode_video_frames` is a blocking call (but itself multi‑threaded),
+        so wrapping it in threads lets you launch multiple encodings at once.
         """
         video_paths = {}
-        for key in self.meta.video_keys:
-            video_path = self.root / self.meta.get_video_file_path(episode_index, key)
-            video_paths[key] = str(video_path)
-            if video_path.is_file():
-                # Skip if video is already encoded. Could be the case when resuming data recording.
-                continue
-            img_dir = self._get_image_file_path(
-                episode_index=episode_index, image_key=key, frame_index=0
-            ).parent
-            encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+        futures = []
+
+        with ThreadPoolExecutor() as executor:
+            for key in self.meta.video_keys:
+                out_path = self.root / self.meta.get_video_file_path(episode_index, key)
+                video_paths[key] = str(out_path)
+
+                if out_path.is_file():
+                    continue
+
+                img_dir = (
+                    self._get_image_file_path(
+                        episode_index=episode_index,
+                        image_key=key,
+                        frame_index=0
+                    )
+                    .parent
+                )
+
+                futures.append(
+                    executor.submit(
+                        encode_video_frames,
+                        img_dir,
+                        out_path,
+                        self.fps,
+                        overwrite=True
+                    )
+                )
+
+            for future in as_completed(futures):
+                future.result()
 
         return video_paths
+
 
     @classmethod
     def create(
