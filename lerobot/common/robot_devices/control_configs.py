@@ -63,6 +63,8 @@ class RecordControlConfig(ControlConfig):
     fps: int | None = None
     # Number of seconds before starting data collection. It allows the robot devices to warmup and synchronize.
     warmup_time_s: int | float = 10
+    # Number of seconds for the robot to perform the task.
+    episode_warmup_time_s: int | float = 10
     # Number of seconds for data recording for each episode.
     episode_time_s: int | float = 60
     # Number of seconds for resetting the environment after each episode.

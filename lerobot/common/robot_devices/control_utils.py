@@ -186,6 +186,21 @@ def warmup_record(
         teleoperate=enable_teleoperation,
     )
 
+def episode_warmup(
+    robot,
+    events,
+    episode_warmup_time_s,
+    display_data,
+    fps,
+):
+    control_loop(
+        robot=robot,
+        control_time_s=episode_warmup_time_s,
+        display_data=display_data,
+        events=events,
+        fps=fps,
+        teleoperate=True,
+    )
 
 def record_episode(
     robot,

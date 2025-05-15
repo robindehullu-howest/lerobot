@@ -88,6 +88,7 @@ python lerobot/scripts/control_robot.py \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \
     --control.reset_time_s=10 \
+    --control.display_data=true \
     --control.gcs_bucket_name=robot-445714_lerobot_train_data
 ```
 
@@ -139,6 +140,7 @@ python lerobot/scripts/control_robot.py \
 import logging
 import os
 import time
+from pathlib import Path
 from dataclasses import asdict
 from pprint import pformat
 
@@ -166,6 +168,7 @@ from lerobot.common.robot_devices.control_utils import (
     sanity_check_dataset_name,
     sanity_check_dataset_robot_compatibility,
     stop_recording,
+    episode_warmup,
     warmup_record,
 )
 from lerobot.common.robot_devices.robots.utils import Robot, make_robot_from_config
@@ -332,6 +335,10 @@ def record(
         if events["stop_recording"]:
             break
 
+        if (recorded_episodes < cfg.num_episodes) or events["rerecord_episode"]:
+            log_say(f"Warmup episode {dataset.num_episodes}", cfg.play_sounds)
+            episode_warmup(robot, events, cfg.episode_warmup_time_s, cfg.display_data, cfg.fps)           
+
     log_say("Stop recording", cfg.play_sounds, blocking=True)
     stop_recording(robot, listener, cfg.display_data)
 
@@ -339,7 +346,9 @@ def record(
             dataset.push_to_hub(tags=cfg.tags, private=cfg.private)
     if cfg.gcs_bucket_name is not None:
         from lerobot.common.datasets.gcs_utils import push_datasets_to_gcs
-        push_datasets_to_gcs(cfg.gcs_bucket_name, dataset.root)
+        logging.info(f"Pushing dataset to GCS bucket {cfg.gcs_bucket_name}")
+        base_dir = Path(dataset.root.as_posix().replace(dataset.repo_id, ""))
+        push_datasets_to_gcs(cfg.gcs_bucket_name, base_dir, [dataset.repo_id])
 
     log_say("Exiting", cfg.play_sounds)
     return dataset
