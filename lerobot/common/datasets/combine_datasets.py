@@ -8,7 +8,7 @@ import subprocess
 import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 
 META_DIR = "meta"
 INFO_FILE = "info.json"
@@ -274,8 +274,8 @@ def process_video(src_path, dst_path, current_encoder, target_encoder):
         if target_encoder and current_encoder != target_encoder:
             subprocess.run(
                 ["ffmpeg", "-i", str(src_path), "-c:v", target_encoder, "-preset", "slow", "-crf", "18", "-y", str(dst_path)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 check=True
             )
             logging.info(f"Re-encoded {src_path} to {dst_path} with encoder {target_encoder}.")
@@ -283,6 +283,8 @@ def process_video(src_path, dst_path, current_encoder, target_encoder):
             shutil.copy(src_path, dst_path)
             logging.info(f"Copied {src_path} to {dst_path}.")
     except subprocess.CalledProcessError as e:
+        logging.error(f"Error re-encoding {src_path} to {dst_path}: {e.stderr.decode()}")
+    except Exception as e:
         logging.error(f"Error processing {src_path} to {dst_path}: {e}")
 
 def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, excluded_cameras: List[str] = [], target_encoder: str = None) -> None:
@@ -316,7 +318,7 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, exclu
 
             current_encoder = info_features[camera]["info"]["video.codec"]
 
-            with ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
                 futures = []
                 for src_path in sorted(camera_path.iterdir()):
                     new_filename = f"episode_{camera_indices[camera]:06d}.mp4"
@@ -325,8 +327,7 @@ def copy_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str, exclu
                     futures.append(executor.submit(process_video, src_path, dst_path, current_encoder, target_encoder))
                     camera_indices[camera] += 1
 
-                for future in futures:
-                    future.result()
+                wait(futures)
                 
 
 def symlink_videos(repo_ids: List[str], combined_repo_id: str, base_dir: str) -> None:
