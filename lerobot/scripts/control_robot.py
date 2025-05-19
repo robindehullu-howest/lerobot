@@ -115,7 +115,6 @@ python lerobot/scripts/train.py \
   --policy.type=act \
   --output_dir=outputs/train/act_so100_pick_place_lego \
   --job_name=act_koch_pick_place_lego \
-  --device=cuda \
   --wandb.enable=true
 ```
 
