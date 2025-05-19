@@ -517,18 +517,18 @@ class So100RobotConfig(ManipulatorRobotConfig):
                     "gripper": [6, "sts3215"],
                 },
             ),
-            # "secondary": FeetechMotorsBusConfig(
-            #     port="COM6",
-            #     motors={
-            #         # name: (index, model)
-            #         "shoulder_pan": [1, "sts3215"],
-            #         "shoulder_lift": [2, "sts3215"],
-            #         "elbow_flex": [3, "sts3215"],
-            #         "wrist_flex": [4, "sts3215"],
-            #         "wrist_roll": [5, "sts3215"],
-            #         "gripper": [6, "sts3215"],
-            #     },
-            # ),
+            "secondary": FeetechMotorsBusConfig(
+                port="COM7",
+                motors={
+                    # name: (index, model)
+                    "shoulder_pan": [1, "sts3215"],
+                    "shoulder_lift": [2, "sts3215"],
+                    "elbow_flex": [3, "sts3215"],
+                    "wrist_flex": [4, "sts3215"],
+                    "wrist_roll": [5, "sts3215"],
+                    "gripper": [6, "sts3215"],
+                },
+            ),
         }
     )
 
@@ -546,18 +546,18 @@ class So100RobotConfig(ManipulatorRobotConfig):
                     "gripper": [6, "sts3215"],
                 },
             ),
-            # "secondary": FeetechMotorsBusConfig(
-            #     port="COM7",
-            #     motors={
-            #         # name: (index, model)
-            #         "shoulder_pan": [1, "sts3215"],
-            #         "shoulder_lift": [2, "sts3215"],
-            #         "elbow_flex": [3, "sts3215"],
-            #         "wrist_flex": [4, "sts3215"],
-            #         "wrist_roll": [5, "sts3215"],
-            #         "gripper": [6, "sts3215"],
-            #     },
-            # ),
+            "secondary": FeetechMotorsBusConfig(
+                port="COM6",
+                motors={
+                    # name: (index, model)
+                    "shoulder_pan": [1, "sts3215"],
+                    "shoulder_lift": [2, "sts3215"],
+                    "elbow_flex": [3, "sts3215"],
+                    "wrist_flex": [4, "sts3215"],
+                    "wrist_roll": [5, "sts3215"],
+                    "gripper": [6, "sts3215"],
+                },
+            ),
         }
     )
 
@@ -569,24 +569,24 @@ class So100RobotConfig(ManipulatorRobotConfig):
                 width=640,
                 height=480,
             ),
-            "frontal": OpenCVCameraConfig(
+            # "frontal": OpenCVCameraConfig(
+            #     camera_index=1,
+            #     fps=30,
+            #     width=640,
+            #     height=480,
+            # ),
+            "main_gripper": OpenCVCameraConfig(
                 camera_index=1,
                 fps=30,
                 width=640,
                 height=480,
             ),
-            "gripper": OpenCVCameraConfig(
+            "secondary_gripper": OpenCVCameraConfig(
                 camera_index=0,
                 fps=30,
                 width=640,
                 height=480,
             ),
-            # "overview": OpenCVCameraConfig(
-            #     camera_index=3,
-            #     fps=30,
-            #     width=640,
-            #     height=480,
-            # ),
             # "webcam": OpenCVCameraConfig(
             #     camera_index=4,
             #     fps=30,
