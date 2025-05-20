@@ -6,8 +6,6 @@ from google.cloud import storage
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, wait
 
-logging.basicConfig(level=logging.INFO)
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Pull or push dataset from/to GCS bucket.")
     parser.add_argument("--bucket_name", type=str, required=True, help="Name of the GCS bucket.")
@@ -164,3 +162,6 @@ if __name__ == "__main__":
             pull_models_from_gcs(bucket_name, base_dir, identifiers, force_overwrite)
         elif action == "push":
             push_models_to_gcs(bucket_name, base_dir, identifiers, force_overwrite)
+    
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
