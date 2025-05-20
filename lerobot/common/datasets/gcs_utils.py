@@ -139,6 +139,8 @@ def push_models_to_gcs(bucket_name: str, base_dir: Path | str, model_ids: List[s
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
     cache_dir = Path(os.getenv("HOME") or os.getenv("USERPROFILE"), ".cache", "huggingface", "lerobot")
     output_dir = Path("outputs/train")
 
@@ -162,6 +164,3 @@ if __name__ == "__main__":
             pull_models_from_gcs(bucket_name, base_dir, identifiers, force_overwrite)
         elif action == "push":
             push_models_to_gcs(bucket_name, base_dir, identifiers, force_overwrite)
-    
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
