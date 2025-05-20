@@ -130,6 +130,7 @@ python lerobot/scripts/control_robot.py \
     --control.warmup_time_s=2 \
     --control.episode_time_s=30 \
     --control.reset_time_s=10 \
+    --control.display_data=true \
     --control.push_to_hub=true \
     --control.gcs_bucket_name=robot-445714_lerobot_eval_data \
     --control.policy.path=gs://robot-445714_lerobot_models/act_so100_pick_place_lego/checkpoints/080000/pretrained_model
