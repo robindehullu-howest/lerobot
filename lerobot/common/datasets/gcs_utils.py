@@ -121,6 +121,10 @@ def push_models_to_gcs(bucket_name: str, base_dir: Path | str, model_ids: List[s
 
     for model_id in model_ids:
         model_dir = Path(base_dir, model_id)
+        if not model_dir.is_dir():
+            logging.warning(f"Model directory {model_dir} does not exist. Skipping.")
+            continue
+        
         futures = []
 
         with ThreadPoolExecutor(max_workers=10) as executor:
