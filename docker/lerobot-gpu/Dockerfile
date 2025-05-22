@@ -5,6 +5,7 @@ ARG PYTHON_VERSION=3.10
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MUJOCO_GL="egl"
 ENV PATH="/opt/venv/bin:$PATH"
+ENV GOOGLE_APPLICATION_CREDENTIALS="/.keys/service-account-key.json"
 
 # Install dependencies and set up Python in a single layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -20,5 +21,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Clone repository and install LeRobot in a single layer
 COPY . /lerobot
 WORKDIR /lerobot
-RUN /opt/venv/bin/pip install --upgrade --no-cache-dir pip \
-    && /opt/venv/bin/pip install --no-cache-dir ".[test, aloha, xarm, pusht, dynamixel]"
+RUN chmod +x /lerobot/docker/lerobot-gpu/entrypoint.sh && \
+    /opt/venv/bin/pip install --upgrade --no-cache-dir pip \
+    && /opt/venv/bin/pip install --no-cache-dir ".[google_cloud]" 
+
+ENTRYPOINT [ "/lerobot/docker/lerobot-gpu/entrypoint.sh" ]
+CMD ["sh", "-c", "python lerobot/scripts/train.py \
+    --dataset.repo_id so100/training_set \
+    --policy.type ${POLICY} \
+    --output_dir outputs/train/${MODEL_ID} \
+    --job_name ${JOB_NAME} \
+    --wandb.enable true \
+    --batch_size ${BATCH_SIZE} \
+    --steps ${MAX_STEPS} \
+    --save_freq ${SAVE_STEPS} \
+    --num_workers ${NUM_DATALOADERS}"]
