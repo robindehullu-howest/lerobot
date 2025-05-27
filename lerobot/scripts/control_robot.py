@@ -149,6 +149,7 @@ import rerun as rr
 # from safetensors.torch import load_file, save_file
 from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.common.policies.factory import make_policy
+from lerobot.common.policies.act.modeling_act import ACTPolicy
 from lerobot.common.robot_devices.control_configs import (
     CalibrateControlConfig,
     ControlConfig,
@@ -174,6 +175,7 @@ from lerobot.common.robot_devices.control_utils import (
 from lerobot.common.robot_devices.robots.utils import Robot, make_robot_from_config
 from lerobot.common.robot_devices.utils import busy_wait, safe_disconnect
 from lerobot.common.utils.utils import has_method, init_logging, log_say
+from lerobot.common.extensions.act_attention_mapper import ACTPolicyWithAttention
 from lerobot.configs import parser
 
 ########################################################################################
@@ -278,6 +280,10 @@ def record(
 
     # Load pretrained policy
     policy = None if cfg.policy is None else make_policy(cfg.policy, ds_meta=dataset.meta)
+
+    if isinstance(policy, ACTPolicy):
+        # We simply wrap the existing ACT policy with our ACTPolicyWithAttention plugin
+        policy = ACTPolicyWithAttention(policy)
 
     if not robot.is_connected:
         robot.connect()
