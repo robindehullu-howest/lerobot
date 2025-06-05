@@ -35,5 +35,5 @@ CMD ["sh", "-c", "python lerobot/scripts/train.py \
     --batch_size ${BATCH_SIZE} \
     --steps ${MAX_STEPS} \
     --save_freq ${SAVE_STEPS} \
-    --gcs_bucket robot-445714_lerobot_models \
+    --gcs_bucket ${MODEL_BUCKET_NAME} \
     --num_workers ${NUM_DATALOADERS}"]

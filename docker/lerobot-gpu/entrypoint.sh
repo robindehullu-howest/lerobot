@@ -26,7 +26,7 @@ fi
 
 echo "Downloading dataset..."
 python lerobot/common/datasets/gcs_utils.py \
-    --bucket_name=robot-445714_lerobot_train_data \
+    --bucket_name="${DATA_BUCKET_NAME}" \
     --action=pull --content_type=dataset \
     --identifiers="${DATASET_IDS}" \
 
