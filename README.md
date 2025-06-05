@@ -289,10 +289,10 @@ Project: `robot-445714`
 Region: `europe-west1`  
 
 Available datasets:  
- - Modular Lego brick PicknPlace datasets
- - Additional Lego brick grasping dataset
- - Unfolding dataset
- - Folding dataset
+ - Modular Lego brick PicknPlace datasets  
+ - Additional Lego brick grasping dataset  
+ - Unfolding dataset  
+ - Folding dataset  
 
 ### Models
 Bucket: `robot-445714_lerobot_models`  
@@ -300,13 +300,13 @@ Project: `robot-445714`
 Region: `europe-west1`  
 
 Best performing checkpoints of models:  
- - act_vertical_norotate_sequential_long (Single-Axis Pick&Place)
- - act_cross_extra_norotate_sequential_augmented (Augm. Dual-Axis P&P)
- - act_unfold_tiny (Unfold Basic)
- - diffusion_unfold (Unfold Diffusion)
- - dot_unfold_a40 (Unfold DOT)
- - gr00t_unfold (Unfold GR00T)
- - gr00t_fold (Fold GR00T)
+ - act_vertical_norotate_sequential_long (Single-Axis Pick&Place)  
+ - act_cross_extra_norotate_sequential_augmented (Augm. Dual-Axis P&P)  
+ - act_unfold_tiny (Unfold Basic)  
+ - diffusion_unfold (Unfold Diffusion)  
+ - dot_unfold_a40 (Unfold DOT)  
+ - gr00t_unfold (Unfold GR00T)  
+ - gr00t_fold (Fold GR00T)  
 
 ### Evaluation datasets
 Bucket: `robot-445714_lerobot_eval_data`  
@@ -314,17 +314,17 @@ Project: `robot-445714`
 Region: `europe-west1`  
 
 Available datasets:  
- - eval_present_vertical
- - eval_act_01_cross_norotate_sequential_cp
- - eval_act_cross_norotate_sequential_cp-40k
- - eval_act_cross_norotate_sequential_cp-60k
- - eval_act_cross_norotate_sequential_cp-80k
- - eval_act_cross_norotate_sequential_cp-100k
- - eval_cross_extra_norotate_sequential_augmented_cp-60k
- - eval_cross_extra_norotate_sequential_augmented_cp-100k
- - eval_cross_extra_norotate_sequential_augmented_cp-240k
- - eval_cross_extra_norotate_sequential_augmented_cp-300k
- - eval_act_unfold_tiny
- - eval_act_unfold_tiny_cp_60
- - eval_diffusion_unfold_cp-90k
- - eval_dot_unfold_cp-70k
+ - eval_present_vertical  
+ - eval_act_01_cross_norotate_sequential_cp  
+ - eval_act_cross_norotate_sequential_cp-40k  
+ - eval_act_cross_norotate_sequential_cp-60k  
+ - eval_act_cross_norotate_sequential_cp-80k  
+ - eval_act_cross_norotate_sequential_cp-100k  
+ - eval_cross_extra_norotate_sequential_augmented_cp-60k  
+ - eval_cross_extra_norotate_sequential_augmented_cp-100k  
+ - eval_cross_extra_norotate_sequential_augmented_cp-240k  
+ - eval_cross_extra_norotate_sequential_augmented_cp-300k  
+ - eval_act_unfold_tiny  
+ - eval_act_unfold_tiny_cp_60  
+ - eval_diffusion_unfold_cp-90k  
+ - eval_dot_unfold_cp-70k  
