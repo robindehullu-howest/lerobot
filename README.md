@@ -1,108 +1,9 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="media/lerobot-logo-thumbnail.png">
-    <source media="(prefers-color-scheme: light)" srcset="media/lerobot-logo-thumbnail.png">
-    <img alt="LeRobot, Hugging Face Robotics Library" src="media/lerobot-logo-thumbnail.png" style="max-width: 100%;">
-  </picture>
-  <br/>
-  <br/>
-</p>
-
-<div align="center">
-
-[![Tests](https://github.com/huggingface/lerobot/actions/workflows/nightly-tests.yml/badge.svg?branch=main)](https://github.com/huggingface/lerobot/actions/workflows/nightly-tests.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/huggingface/lerobot/branch/main/graph/badge.svg?token=TODO)](https://codecov.io/gh/huggingface/lerobot)
-[![Python versions](https://img.shields.io/pypi/pyversions/lerobot)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/huggingface/lerobot/blob/main/LICENSE)
-[![Status](https://img.shields.io/pypi/status/lerobot)](https://pypi.org/project/lerobot/)
-[![Version](https://img.shields.io/pypi/v/lerobot)](https://pypi.org/project/lerobot/)
-[![Examples](https://img.shields.io/badge/Examples-green.svg)](https://github.com/huggingface/lerobot/tree/main/examples)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.1%20adopted-ff69b4.svg)](https://github.com/huggingface/lerobot/blob/main/CODE_OF_CONDUCT.md)
-[![Discord](https://dcbadge.vercel.app/api/server/C5P34WJ68S?style=flat)](https://discord.gg/s3KuuzsPFb)
-
-</div>
-
-<h2 align="center">
-    <p><a href="https://github.com/huggingface/lerobot/blob/main/examples/12_use_so101.md">
-        Build Your Own SO-101 Robot!</a></p>
-</h2>
-
-<div align="center">
-  <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;" >
-    <img
-      src="media/so101/so101.webp?raw=true"
-      alt="SO-101 follower arm"
-      title="SO-101 follower arm"
-      style="width: 40%;"
-    />
-    <img
-      src="media/so101/so101-leader.webp?raw=true"
-      alt="SO-101 leader arm"
-      title="SO-101 leader arm"
-      style="width: 40%;"
-    />
-  </div>
-
-
-  <p><strong>Meet the updated SO100, the SO-101 – Just €114 per arm!</strong></p>
-  <p>Train it in minutes with a few simple moves on your laptop.</p>
-  <p>Then sit back and watch your creation act autonomously! 🤯</p>
-
-  <p><a href="https://github.com/huggingface/lerobot/blob/main/examples/12_use_so101.md">
-      See the full SO-101 tutorial here.</a></p>
-
-  <p>Want to take it to the next level? Make your SO-101 mobile by building LeKiwi!</p>
-  <p>Check out the <a href="https://github.com/huggingface/lerobot/blob/main/examples/11_use_lekiwi.md">LeKiwi tutorial</a> and bring your robot to life on wheels.</p>
-
-  <img src="media/lekiwi/kiwi.webp?raw=true" alt="LeKiwi mobile robot" title="LeKiwi mobile robot" width="50%">
-</div>
-
-<br/>
-
-<h3 align="center">
-    <p>LeRobot: State-of-the-art AI for real-world robotics</p>
-</h3>
-
----
-
-🤗 LeRobot aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry to robotics so that everyone can contribute and benefit from sharing datasets and pretrained models.
-
-🤗 LeRobot contains state-of-the-art approaches that have been shown to transfer to the real-world with a focus on imitation learning and reinforcement learning.
-
-🤗 LeRobot already provides a set of pretrained models, datasets with human collected demonstrations, and simulation environments to get started without assembling a robot. In the coming weeks, the plan is to add more and more support for real-world robotics on the most affordable and capable robots out there.
-
-🤗 LeRobot hosts pretrained models and datasets on this Hugging Face community page: [huggingface.co/lerobot](https://huggingface.co/lerobot)
-
-#### Examples of pretrained models on simulation environments
-
-<table>
-  <tr>
-    <td><img src="media/gym/aloha_act.gif" width="100%" alt="ACT policy on ALOHA env"/></td>
-    <td><img src="media/gym/simxarm_tdmpc.gif" width="100%" alt="TDMPC policy on SimXArm env"/></td>
-    <td><img src="media/gym/pusht_diffusion.gif" width="100%" alt="Diffusion policy on PushT env"/></td>
-  </tr>
-  <tr>
-    <td align="center">ACT policy on ALOHA env</td>
-    <td align="center">TDMPC policy on SimXArm env</td>
-    <td align="center">Diffusion policy on PushT env</td>
-  </tr>
-</table>
-
-### Acknowledgment
-
-- Thanks to Tony Zhao, Zipeng Fu and colleagues for open sourcing ACT policy, ALOHA environments and datasets. Ours are adapted from [ALOHA](https://tonyzhaozh.github.io/aloha) and [Mobile ALOHA](https://mobile-aloha.github.io).
-- Thanks to Cheng Chi, Zhenjia Xu and colleagues for open sourcing Diffusion policy, Pusht environment and datasets, as well as UMI datasets. Ours are adapted from [Diffusion Policy](https://diffusion-policy.cs.columbia.edu) and [UMI Gripper](https://umi-gripper.github.io).
-- Thanks to Nicklas Hansen, Yunhai Feng and colleagues for open sourcing TDMPC policy, Simxarm environments and datasets. Ours are adapted from [TDMPC](https://github.com/nicklashansen/tdmpc) and [FOWM](https://www.yunhaifeng.com/FOWM).
-- Thanks to Antonio Loquercio and Ashish Kumar for their early support.
-- Thanks to [Seungjae (Jay) Lee](https://sjlee.cc/), [Mahi Shafiullah](https://mahis.life/) and colleagues for open sourcing [VQ-BeT](https://sjlee.cc/vq-bet/) policy and helping us adapt the codebase to our repository. The policy is adapted from [VQ-BeT repo](https://github.com/jayLEE0301/vq_bet_official).
-
-
 ## Installation
 
-Download our source code:
+Download the source code:
 ```bash
-git clone https://github.com/huggingface/lerobot.git
-cd lerobot
+git clone git@bitbucket.org:ml6team/lerobot-utils.git
+cd lerobot-utils
 ```
 
 Create a virtual environment with Python 3.10 and activate it, e.g. with [`miniconda`](https://docs.anaconda.com/free/miniconda/index.html):
@@ -130,16 +31,6 @@ pip install -e .
 
 > **NOTE:** If you encounter build errors, you may need to install additional dependencies (`cmake`, `build-essential`, and `ffmpeg libs`). On Linux, run:
 `sudo apt-get install cmake build-essential python3-dev pkg-config libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev pkg-config`. For other systems, see: [Compiling PyAV](https://pyav.org/docs/develop/overview/installation.html#bring-your-own-ffmpeg)
-
-For simulations, 🤗 LeRobot comes with gymnasium environments that can be installed as extras:
-- [aloha](https://github.com/huggingface/gym-aloha)
-- [xarm](https://github.com/huggingface/gym-xarm)
-- [pusht](https://github.com/huggingface/gym-pusht)
-
-For instance, to install 🤗 LeRobot with aloha and pusht, use:
-```bash
-pip install -e ".[aloha, pusht]"
-```
 
 To use [Weights and Biases](https://docs.wandb.ai/quickstart) for experiment tracking, log in with
 ```bash
@@ -171,34 +62,6 @@ wandb login
 ├── outputs               # contains results of scripts execution: logs, videos, model checkpoints
 └── tests                 # contains pytest utilities for continuous integration
 ```
-
-### Visualize datasets
-
-Check out [example 1](./examples/1_load_lerobot_dataset.py) that illustrates how to use our dataset class which automatically downloads data from the Hugging Face hub.
-
-You can also locally visualize episodes from a dataset on the hub by executing our script from the command line:
-```bash
-python lerobot/scripts/visualize_dataset.py \
-    --repo-id lerobot/pusht \
-    --episode-index 0
-```
-
-or from a dataset in a local folder with the `root` option and the `--local-files-only` (in the following case the dataset will be searched for in `./my_local_data_dir/lerobot/pusht`)
-```bash
-python lerobot/scripts/visualize_dataset.py \
-    --repo-id lerobot/pusht \
-    --root ./my_local_data_dir \
-    --local-files-only 1 \
-    --episode-index 0
-```
-
-
-It will open `rerun.io` and display the camera streams, robot states and actions, like this:
-
-https://github-production-user-asset-6210df.s3.amazonaws.com/4681518/328035972-fd46b787-b532-47e2-bb6f-fd536a55a7ed.mov?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240505%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240505T172924Z&X-Amz-Expires=300&X-Amz-Signature=d680b26c532eeaf80740f08af3320d22ad0b8a4e4da1bcc4f33142c15b509eda&X-Amz-SignedHeaders=host&actor_id=24889239&key_id=0&repo_id=748713144
-
-
-Our script can also visualize datasets stored on a distant server. See `python lerobot/scripts/visualize_dataset.py --help` for more instructions.
 
 ### The `LeRobotDataset` format
 
@@ -245,29 +108,6 @@ A `LeRobotDataset` is serialised using several widespread file formats for each 
 
 Dataset can be uploaded/downloaded from the HuggingFace hub seamlessly. To work on a local dataset, you can specify its location with the `root` argument if it's not in the default `~/.cache/huggingface/lerobot` location.
 
-### Evaluate a pretrained policy
-
-Check out [example 2](./examples/2_evaluate_pretrained_policy.py) that illustrates how to download a pretrained policy from Hugging Face hub, and run an evaluation on its corresponding environment.
-
-We also provide a more capable script to parallelize the evaluation over multiple environments during the same rollout. Here is an example with a pretrained model hosted on [lerobot/diffusion_pusht](https://huggingface.co/lerobot/diffusion_pusht):
-```bash
-python lerobot/scripts/eval.py \
-    --policy.path=lerobot/diffusion_pusht \
-    --env.type=pusht \
-    --eval.batch_size=10 \
-    --eval.n_episodes=10 \
-    --policy.use_amp=false \
-    --policy.device=cuda
-```
-
-Note: After training your own policy, you can re-evaluate the checkpoints with:
-
-```bash
-python lerobot/scripts/eval.py --policy.path={OUTPUT_DIR}/checkpoints/last/pretrained_model
-```
-
-See `python lerobot/scripts/eval.py --help` for more instructions.
-
 ### Train your own policy
 
 Check out [example 3](./examples/3_train_policy.py) that illustrates how to train a model using our core library in python, and [example 4](./examples/4_train_policy_with_script.md) that shows how to use our training script from command line.
@@ -280,134 +120,211 @@ A link to the wandb logs for the run will also show up in yellow in your termina
 
 Note: For efficiency, during training every checkpoint is evaluated on a low number of episodes. You may use `--eval.n_episodes=500` to evaluate on more episodes than the default. Or, after training, you may want to re-evaluate your best checkpoints on more episodes or change the evaluation settings. See `python lerobot/scripts/eval.py --help` for more instructions.
 
-#### Reproduce state-of-the-art (SOTA)
+## Useful example commands:
+More in the `examples/` folder
 
-We provide some pretrained policies on our [hub page](https://huggingface.co/lerobot) that can achieve state-of-the-art performances.
-You can reproduce their training by loading the config from their run. Simply running:
+### USB port discovery
 ```bash
-python lerobot/scripts/train.py --config_path=lerobot/diffusion_pusht
+python lerobot/scripts/find_motors_bus_port.py
 ```
-reproduces SOTA results for Diffusion Policy on the PushT task.
+Adjust `lerobot/common/robot_devices/robots/configs.py` accordingly.
 
-## Contribute
-
-If you would like to contribute to 🤗 LeRobot, please check out our [contribution guide](https://github.com/huggingface/lerobot/blob/main/CONTRIBUTING.md).
-
-<!-- ### Add a new dataset
-
-To add a dataset to the hub, you need to login using a write-access token, which can be generated from the [Hugging Face settings](https://huggingface.co/settings/tokens):
+### Calibration
+Do this for all your arms.
 ```bash
-huggingface-cli login --token ${HUGGINGFACE_TOKEN} --add-to-git-credential
+python lerobot/scripts/control_robot.py \
+  --robot.type='so100' \
+  --robot.cameras='{}' \
+  --control.type='calibrate' \
+  --control.arms='["main_follower"]'
 ```
 
-Then point to your raw dataset folder (e.g. `data/aloha_static_pingpong_test_raw`), and push your dataset to the hub with:
+### Teleoperation
 ```bash
-python lerobot/scripts/push_dataset_to_hub.py \
---raw-dir data/aloha_static_pingpong_test_raw \
---out-dir data \
---repo-id lerobot/aloha_static_pingpong_test \
---raw-format aloha_hdf5
+python lerobot/scripts/control_robot.py \
+  --robot.type='so100' \
+  --control.type='teleoperate' \
+  --control.fps=30 \
+  --control.display_data=true
 ```
 
-See `python lerobot/scripts/push_dataset_to_hub.py --help` for more instructions.
-
-If your dataset format is not supported, implement your own in `lerobot/common/datasets/push_dataset_to_hub/${raw_format}_format.py` by copying examples like [pusht_zarr](https://github.com/huggingface/lerobot/blob/main/lerobot/common/datasets/push_dataset_to_hub/pusht_zarr_format.py), [umi_zarr](https://github.com/huggingface/lerobot/blob/main/lerobot/common/datasets/push_dataset_to_hub/umi_zarr_format.py), [aloha_hdf5](https://github.com/huggingface/lerobot/blob/main/lerobot/common/datasets/push_dataset_to_hub/aloha_hdf5_format.py), or [xarm_pkl](https://github.com/huggingface/lerobot/blob/main/lerobot/common/datasets/push_dataset_to_hub/xarm_pkl_format.py). -->
-
-
-### Add a pretrained policy
-
-Once you have trained a policy you may upload it to the Hugging Face hub using a hub id that looks like `${hf_user}/${repo_name}` (e.g. [lerobot/diffusion_pusht](https://huggingface.co/lerobot/diffusion_pusht)).
-
-You first need to find the checkpoint folder located inside your experiment directory (e.g. `outputs/train/2024-05-05/20-21-12_aloha_act_default/checkpoints/002500`). Within that there is a `pretrained_model` directory which should contain:
-- `config.json`: A serialized version of the policy configuration (following the policy's dataclass config).
-- `model.safetensors`: A set of `torch.nn.Module` parameters, saved in [Hugging Face Safetensors](https://huggingface.co/docs/safetensors/index) format.
-- `train_config.json`: A consolidated configuration containing all parameters used for training. The policy configuration should match `config.json` exactly. This is useful for anyone who wants to evaluate your policy or for reproducibility.
-
-To upload these to the hub, run the following:
+### Dataset recording
 ```bash
-huggingface-cli upload ${hf_user}/${repo_name} path/to/pretrained_model
+python lerobot/scripts/control_robot.py \
+  --robot.type='so100' \
+  --control.type='record' \
+  --control.fps=30 \
+  --control.single_task="Fold a towel." \
+  --control.repo_id="so100/fold_towel" \
+  --control.num_episodes=10 \
+  --control.warmup_time_s=20 \
+  --control.episode_warmup_time_s=10 \
+  --control.episode_time_s=60 \
+  --control.reset_time_s=2 \
+  --control.display_data=true \
+  --control.gcs_bucket_name="robot-445714_lerobot_train_data" \
+  --control.push_to_hub=false
 ```
 
-See [eval.py](https://github.com/huggingface/lerobot/blob/main/lerobot/scripts/eval.py) for an example of how other people may use your policy.
-
-
-### Improve your code with profiling
-
-An example of a code snippet to profile the evaluation of a policy:
-```python
-from torch.profiler import profile, record_function, ProfilerActivity
-
-def trace_handler(prof):
-    prof.export_chrome_trace(f"tmp/trace_schedule_{prof.step_num}.json")
-
-with profile(
-    activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-    schedule=torch.profiler.schedule(
-        wait=2,
-        warmup=2,
-        active=3,
-    ),
-    on_trace_ready=trace_handler
-) as prof:
-    with record_function("eval_policy"):
-        for i in range(num_episodes):
-            prof.step()
-            # insert code to profile, potentially whole body of eval_policy function
+### Model evaluation
+*WARNING:* Evaluating ACT will save attention mapped images in the `outputs/attention_map/` folder. This is a rough and hasty implementation. A more robust solution is advised.
+```bash
+python lerobot/scripts/control_robot.py \
+  --robot.type='so100' \
+  --control.type='record' \
+  --control.fps=30 \
+  --control.single_task="Unfold a towel." \
+  --control.repo_id="so100/eval_act_unfold_am_cp-60k" \
+  --control.num_episodes=10 \
+  --control.warmup_time_s=2 \
+  --control.episode_time_s=90 \
+  --control.reset_time_s=10 \
+  --control.display_data=true \
+  --control.push_to_hub=false \
+  --control.gcs_bucket_name="robot-445714_lerobot_eval_data" \
+  --control.policy.path="gs://robot-445714_lerobot_models/so100/act_unfold_2/checkpoints/060000/pretrained_model"
 ```
 
-## Citation
+## Google Cloud Storage
 
-If you want, you can cite this work with:
-```bibtex
-@misc{cadene2024lerobot,
-    author = {Cadene, Remi and Alibert, Simon and Soare, Alexander and Gallouedec, Quentin and Zouitine, Adil and Palma, Steven and Kooijmans, Pepijn and Aractingi, Michel and Shukor, Mustafa and Aubakirova, Dana and Russi, Martino and Capuano, Francesco and Pascale, Caroline and Choghari, Jade and Moss, Jess and Wolf, Thomas},
-    title = {LeRobot: State-of-the-art Machine Learning for Real-World Robotics in Pytorch},
-    howpublished = "\url{https://github.com/huggingface/lerobot}",
-    year = {2024}
-}
+### Datasets
+LeRobot dataset identifiers should use *group_name/dataset_name* as a format.  
+It is recommended to use a different bucket for training data and model checkpoints.
+
+### Models
+Model identifiers should use *group_name/model_name* as a format.
+
+### Commands
+Pull and push datasets and models using this command. Multiple identifiers can be specified using `,` as a delimiter.
+```bash
+python lerobot/common/datasets/gcs_utils.py \
+  --bucket_name="robot-445714_lerobot_models" \
+  --action='pull' \
+  --content_type='model' \
+  --identifiers="so100/diffusion_unfold,so100/act_unfold"
+```
+Combine datasets and/or convert the video encoding using the following command.
+
+Combining example:
+```bash
+python lerobot/common/datasets/combine_datasets.py \
+  --repo_ids="so100/x0_y-2,so100/x0_y-1,so100/center,so100/x0_y1,so100/x0_y2"
+  --combined_repo_id="so100/vertical_dataset"
 ```
 
-Additionally, if you are using any of the particular policy architecture, pretrained models, or datasets, it is recommended to cite the original authors of the work as they appear below:
-
-- [Diffusion Policy](https://diffusion-policy.cs.columbia.edu)
-```bibtex
-@article{chi2024diffusionpolicy,
-	author = {Cheng Chi and Zhenjia Xu and Siyuan Feng and Eric Cousineau and Yilun Du and Benjamin Burchfiel and Russ Tedrake and Shuran Song},
-	title ={Diffusion Policy: Visuomotor Policy Learning via Action Diffusion},
-	journal = {The International Journal of Robotics Research},
-	year = {2024},
-}
-```
-- [ACT or ALOHA](https://tonyzhaozh.github.io/aloha)
-```bibtex
-@article{zhao2023learning,
-  title={Learning fine-grained bimanual manipulation with low-cost hardware},
-  author={Zhao, Tony Z and Kumar, Vikash and Levine, Sergey and Finn, Chelsea},
-  journal={arXiv preprint arXiv:2304.13705},
-  year={2023}
-}
+Transcoding example:
+```bash
+python lerobot/common/datasets/combine_datasets.py \
+  --repo_ids="so100/unfold_towel" \
+  --combined_repo_id="so100/unfold_transcoded" \
+  --video_encoder='h264' 
 ```
 
-- [TDMPC](https://www.nicklashansen.com/td-mpc/)
+## LeRobot Remote Training
+Build the docker image at `docker/lerobot-gpu/Dockerfile`  
+Set up a pod using the template below. (recommended GPU: **A40**)
 
-```bibtex
-@inproceedings{Hansen2022tdmpc,
-	title={Temporal Difference Learning for Model Predictive Control},
-	author={Nicklas Hansen and Xiaolong Wang and Hao Su},
-	booktitle={ICML},
-	year={2022}
-}
-```
+Secrets:  
+`WANDB_API_KEY`  
+`SA_KEY` Google Service Account key for bucket access.  
 
-- [VQ-BeT](https://sjlee.cc/vq-bet/)
-```bibtex
-@article{lee2024behavior,
-  title={Behavior generation with latent actions},
-  author={Lee, Seungjae and Wang, Yibin and Etukuru, Haritheja and Kim, H Jin and Shafiullah, Nur Muhammad Mahi and Pinto, Lerrel},
-  journal={arXiv preprint arXiv:2403.03181},
-  year={2024}
-}
-```
-## Star History
+Public Environment Variables:  
+`MODEL_ID`  
+`MAX_STEPS`  
+`SAVE_STEPS`  
+`NUM_DATALOADERS`  
+`BATCH_SIZE`  
+`POLICY`  
+`JOB_NAME`  
+`DATA_BUCKET_NAME`  
+`MODELS_BUCKET_NAME`  
 
-[![Star History Chart](https://api.star-history.com/svg?repos=huggingface/lerobot&type=Timeline)](https://star-history.com/#huggingface/lerobot&Timeline)
+![](media/runpod/training/LeRobot_training.png)
+
+## GR00T-N1
+Clone the GR00T-N1 repository at `https://github.com/robindehullu-howest/Isaac-GR00T.git`
+
+### Remote Fine-tuning
+Build the docker image using `Dockerfile_ft`  
+Set up a pod using the template below. (recommended GPU: **L40S**)
+
+Secrets:  
+`WANDB_API_KEY`  
+`SA_KEY` Google Service Account key for bucket access.  
+
+Public Environment Variables:  
+`MODEL_ID`  
+`MAX_STEPS`  
+`SAVE_STEPS`  
+`NUM_DATALOADERS`  
+`DATA_CONFIG` - ['so100', 'so100_bimanual']  
+`BATCH_SIZE`  
+`DATA_BUCKET_NAME`  
+`MODELS_BUCKET_NAME`  
+
+![](media/runpod/training/GR00T-N1_finetune.png)
+
+### Remote inference server
+Build the docker image using `Dockerfile_inf`  
+Set up a pod **as closeby as possible** using the template below. (recommended GPU: **L40S**)
+
+Make sure to specify TCP port 5555. When connecting, use the forwarded port to reach the inference server.
+
+Secrets:  
+`WANDB_API_KEY`  
+`SA_KEY` Google Service Account key for bucket access.  
+
+Public Environment Variables:  
+`MODEL_ID`  - Specify the checkpoint subfolder *group_name/model_name/checkpoint-xxx*  
+`DATASET_IDS` - `,` delimited string of required datasets on the gcs bucket  
+`DATA_CONFIG` - ['so100', 'so100_bimanual']  
+
+![](media/runpod/inference/GR00T-N1_inference.png)
+
+## Artifacts
+
+### Training datasets
+Bucket: `robot-445714_lerobot_train_data`  
+Project: `robot-445714`  
+Region: `europe-west1`  
+
+Available datasets:  
+ - Modular Lego brick PicknPlace datasets
+ - Additional Lego brick grasping dataset
+ - Unfolding dataset
+ - Folding dataset
+
+### Models
+Bucket: `robot-445714_lerobot_models`  
+Project: `robot-445714`  
+Region: `europe-west1`  
+
+Best performing checkpoints of models:  
+ - act_vertical_norotate_sequential_long (Single-Axis Pick&Place)
+ - act_cross_extra_norotate_sequential_augmented (Augm. Dual-Axis P&P)
+ - act_unfold_tiny (Unfold Basic)
+ - diffusion_unfold (Unfold Diffusion)
+ - dot_unfold_a40 (Unfold DOT)
+ - gr00t_unfold (Unfold GR00T)
+ - gr00t_fold (Fold GR00T)
+
+### Evaluation datasets
+Bucket: `robot-445714_lerobot_eval_data`  
+Project: `robot-445714`  
+Region: `europe-west1`  
+
+Available datasets:  
+ - eval_present_vertical
+ - eval_act_01_cross_norotate_sequential_cp
+ - eval_act_cross_norotate_sequential_cp-40k
+ - eval_act_cross_norotate_sequential_cp-60k
+ - eval_act_cross_norotate_sequential_cp-80k
+ - eval_act_cross_norotate_sequential_cp-100k
+ - eval_cross_extra_norotate_sequential_augmented_cp-60k
+ - eval_cross_extra_norotate_sequential_augmented_cp-100k
+ - eval_cross_extra_norotate_sequential_augmented_cp-240k
+ - eval_cross_extra_norotate_sequential_augmented_cp-300k
+ - eval_act_unfold_tiny
+ - eval_act_unfold_tiny_cp_60
+ - eval_diffusion_unfold_cp-90k
+ - eval_dot_unfold_cp-70k
