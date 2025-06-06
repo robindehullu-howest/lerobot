@@ -328,3 +328,13 @@ Available datasets:
  - eval_act_unfold_tiny_cp_60  
  - eval_diffusion_unfold_cp-90k  
  - eval_dot_unfold_cp-70k  
+
+### Links
+LeRobot drive folder (containing GR00T-N1 eval episodes, ACT eval spreadsheet, ...):
+https://drive.google.com/drive/folders/1H7bFyRBkL67z1itrSknejCd2rdgo_T_f?usp=sharing
+
+Presentation:
+https://docs.google.com/presentation/d/1r6NXJwYjrdglVtZYuUbLOXkVUjYds-F4-G4mnIFAhgA/edit?usp=sharing
+
+Internship Report:
+https://docs.google.com/document/d/1gcP3b3iHkm0QLYogTARK0_KkA03gdm0c/edit?usp=sharing&ouid=113689185816887710276&rtpof=true&sd=true
